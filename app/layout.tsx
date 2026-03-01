@@ -46,6 +46,8 @@ export const metadata: Metadata = {
   },
 }
 
+import { AIAgentChat } from "@/components/ai-agent-chat"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -55,6 +57,7 @@ export default function RootLayout({
     <html lang="ko" className="dark">
       <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
         {children}
+        <AIAgentChat />
         <Analytics />
       </body>
     </html>
