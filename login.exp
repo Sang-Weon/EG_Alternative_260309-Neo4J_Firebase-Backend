@@ -1,0 +1,1 @@
+#!/usr/bin/expect -f \nset timeout -1\nspawn npx firebase-tools login --no-localhost\nexpect "Enable Gemini in Firebase features?"\nsend "n\\r"\nexpect eof

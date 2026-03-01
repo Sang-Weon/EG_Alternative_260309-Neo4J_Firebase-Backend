@@ -59,7 +59,7 @@ export function OntologyConfigManager() {
   const [showWizardDialog, setShowWizardDialog] = useState(false)
   const [cypherCode, setCypherCode] = useState("")
 
-  const [neo4jConn, setNeo4jConn] = useState({ uri: "bolt://localhost:7687", user: "neo4j", pass: "" })
+  const [neo4jConn, setNeo4jConn] = useState({ uri: "neo4j+s://d7959f26.databases.neo4j.io", user: "neo4j", pass: "9gFuPD0DnoNlr8Gya28jmkxdSWdRBd7l__AU7C0YSbg" })
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
