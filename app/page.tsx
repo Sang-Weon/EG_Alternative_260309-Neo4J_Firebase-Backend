@@ -2,28 +2,20 @@
 
 import { useState } from "react"
 import { OntologySidebar } from "@/components/ontology-sidebar"
-import { GlobalMap } from "@/components/global-map"
-import { ScenarioPanel } from "@/components/scenario-panel"
-import { QualityDefenseDashboard } from "@/components/quality-defense-dashboard"
-import { MDMDashboard } from "@/components/mdm-dashboard"
-import { SimulationScenarioBuilder } from "@/components/simulation-scenario-builder"
+import { AssetPortfolioDashboard } from "@/components/asset-portfolio-dashboard"
+import { ValuationSimulator } from "@/components/valuation-simulator"
+import { RiskCovenantMonitor } from "@/components/risk-covenant-monitor"
+import { CascadeDefaultSimulator } from "@/components/cascade-default-simulator"
 import { OntologyGraphViewer } from "@/components/ontology-graph-viewer"
-import { FeedbackLoopViewer } from "@/components/feedback-loop-viewer"
 import { OntologyConfigManager } from "@/components/ontology-config-manager"
+import { FeedbackLoopViewer } from "@/components/feedback-loop-viewer"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Page() {
-  const [selectedMenu, setSelectedMenu] = useState("기업 Operation Dashboard")
+  const [selectedMenu, setSelectedMenu] = useState("포트폴리오 대시보드")
   const { toast } = useToast()
-
-  const handleExecuteOption = (option: string) => {
-    toast({
-      title: "시나리오 실행",
-      description: `${option}이(가) 실행되었습니다. 시스템을 업데이트하는 중...`,
-    })
-  }
 
   return (
     <div className="h-screen w-full bg-slate-950 text-white overflow-hidden flex flex-col lg:flex-row">
@@ -31,14 +23,16 @@ export default function Page() {
       <OntologySidebar selectedMenu={selectedMenu} onMenuSelect={setSelectedMenu} />
 
       {/* 메인 콘텐츠 영역 */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-auto">
+      <div className="flex-1 flex flex-col overflow-auto">
         {/* 중앙 캔버스 */}
         <div className="flex-1 p-4 lg:p-6 space-y-4 lg:space-y-6 overflow-auto">
           <header className="space-y-2">
             <h1 className="text-2xl lg:text-3xl font-bold text-balance">
-              온톨로지 기반 제조기업 Operation 최적화 Agent
+              이지자산평가 Graph Platform
             </h1>
-            <p className="text-sm lg:text-base text-zinc-400">실시간 공급망 모니터링 및 시나리오 시뮬레이션</p>
+            <p className="text-sm lg:text-base text-zinc-400">
+              대체투자 자산 가치평가 및 리스크 분석 시스템
+            </p>
           </header>
 
           {selectedMenu === "온톨로지 뷰" && (
@@ -60,17 +54,14 @@ export default function Page() {
             </Tabs>
           )}
 
-          {selectedMenu === "기업 Operation Dashboard" && <GlobalMap />}
+          {selectedMenu === "포트폴리오 대시보드" && <AssetPortfolioDashboard />}
 
-          {selectedMenu === "데이터 정제 기준정보 관리" && <MDMDashboard />}
+          {selectedMenu === "가치평가 시뮬레이션" && <ValuationSimulator />}
 
-          {selectedMenu === "품질관리 및 수율 최적화" && <QualityDefenseDashboard />}
+          {selectedMenu === "리스크/약정 모니터링" && <RiskCovenantMonitor />}
 
-          {selectedMenu === "생산 최적화 시뮬레이션" && <SimulationScenarioBuilder />}
+          {selectedMenu === "연쇄부도 시뮬레이션" && <CascadeDefaultSimulator />}
         </div>
-
-        {/* 우측 시나리오 패널 */}
-        {selectedMenu === "수요 예측 및 최적대응" && <ScenarioPanel onExecute={handleExecuteOption} />}
       </div>
 
       <Toaster />
