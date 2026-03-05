@@ -19,7 +19,7 @@ export interface ObjectType {
     description: string;
     properties: Property[];
     source: "manual" | "ai-mapped";
-    category?: "organization" | "process" | "equipment" | "material" | "product" | "supply_chain" | "quality" | "finance";
+    category?: "company" | "project" | "tranche" | "fund" | "covenant" | "collateral" | "credit_event";
     metadata?: Record<string, any>;
 }
 
@@ -137,7 +137,7 @@ export const OntologyService = {
 
     // Neo4j 연동: 고도화된 Cypher 쿼리 생성기
     generateCypher(objectTypes: ObjectType[], linkTypes: LinkType[]): string {
-        let cypher = "// [K-Palantir] AI Generated Cypher for Neo4j Digital Twin Ontology\n";
+        let cypher = "// [이지자산평가] AI Generated Cypher for Neo4j Alternative Investment Ontology\n";
         cypher += "// Generated at: " + new Date().toLocaleString() + "\n";
         cypher += "// Objects: " + objectTypes.length + " | Links: " + linkTypes.length + "\n\n";
 
@@ -185,260 +185,248 @@ export const OntologyService = {
         return cypher;
     },
 
-    // ────────────────────────────────────────────────────────────────
-    // 드림텍 핸드폰 모듈 비즈니스 완전판 온톨로지 시딩
-    // Objects: 18 | Links: 20 | Properties: 22
-    // ────────────────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    // 이지자산평가 대체투자 온톨로지 시딩
+    // Objects: 15 | Links: 18 | Properties: 28
+    // ════════════════════════════════════════════════════════════════════
     async seedInitialData() {
-        console.log("[K-Palantir] Starting Full Dreamtech Ontology Seed...");
-        console.log("Domain: Mobile Fingerprint Sensor Module (Galaxy S24/S25)");
+        console.log("[이지자산평가] Starting Alternative Investment Ontology Seed...");
+        console.log("Domain: 대체투자 자산 가치평가 (PF, 부동산, 인프라, 항공기/선박, 신재생에너지)");
 
         try {
             // 1. 기존 데이터 일괄 삭제
-            const collections = ["objectTypes", "propertyTypes", "linkTypes", "simulationScenarios", "writebackActions"];
+            const collections = ["objectTypes", "propertyTypes", "linkTypes", "assetSimulations", "writebackActions"];
             const deleteBatch = writeBatch(db);
             for (const colName of collections) {
                 const q = await getDocs(collection(db, colName));
                 q.docs.forEach(d => deleteBatch.delete(d.ref));
             }
             await deleteBatch.commit();
-            console.log("[K-Palantir] Existing data cleared.");
+            console.log("[이지자산평가] Existing data cleared.");
 
             // 2. 신규 데이터 배치 생성
             const seedBatch = writeBatch(db);
 
-            // ═══════════════════════════════════════════════════════
-            // ▶ OBJECTS (18개) - 드림텍 전 도메인 커버리지
-            // ═══════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════════════
+            // ▶ OBJECTS (15개) - 대체투자 전 도메인 커버리지
+            // ═══════════════════════════════════════════════════════════════
             const objects = [
-                // ── 조직 계층 (Organization) ──────────────────────
+                // ── 회사 (Company) ───────────────────────────────────
                 {
-                    name: "Global_HQ",
-                    description: "드림텍 본사 (충남 천안) - 경영 전략 및 글로벌 공급망 총괄",
-                    category: "organization",
+                    name: "Constructor",
+                    description: "시공사 - 건설 공사 실행 및 책임준공 담당",
+                    category: "company",
                     source: "ai-mapped",
                     properties: [
-                        { id: "hq_loc", name: "Location", type: "string", required: true },
-                        { id: "hq_emp", name: "Employee_Count", type: "number", required: false },
-                        { id: "hq_rev", name: "Annual_Revenue_B_KRW", type: "number", required: false }
+                        { id: "con_name", name: "Name", type: "string", required: true },
+                        { id: "con_rating", name: "Credit_Rating", type: "string", required: true },
+                        { id: "con_pd", name: "Default_Probability", type: "number", required: true },
+                        { id: "con_assets", name: "Total_Assets_B", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "HQ", sap_entity: "Company_Code_1000" }
+                    metadata: { neo4j_label: "Company", role: "시공사" }
                 },
                 {
-                    name: "Vina1_Factory",
-                    description: "드림텍 베트남 빈딘 1공장 - SMT/PBA 제조 전문",
-                    category: "organization",
+                    name: "Developer",
+                    description: "시행사 - 부동산 개발 사업 기획 및 추진",
+                    category: "company",
                     source: "ai-mapped",
                     properties: [
-                        { id: "v1_reg", name: "Region", type: "string", required: true },
-                        { id: "v1_cap", name: "Monthly_Capacity_K", type: "number", required: true },
-                        { id: "v1_wk", name: "Worker_Count", type: "number", required: false }
+                        { id: "dev_name", name: "Name", type: "string", required: true },
+                        { id: "dev_rating", name: "Credit_Rating", type: "string", required: true },
+                        { id: "dev_pd", name: "Default_Probability", type: "number", required: true },
+                        { id: "dev_track", name: "Track_Record", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Factory", sap_entity: "Plant_V100" }
+                    metadata: { neo4j_label: "Company", role: "시행사" }
                 },
                 {
-                    name: "Vina2_Factory",
-                    description: "드림텍 베트남 빈딘 2공장 - 모듈 조립 및 최종 검사",
-                    category: "organization",
+                    name: "Operator",
+                    description: "운영사 - 자산 운영 및 관리 담당",
+                    category: "company",
                     source: "ai-mapped",
                     properties: [
-                        { id: "v2_reg", name: "Region", type: "string", required: true },
-                        { id: "v2_cap", name: "Monthly_Capacity_K", type: "number", required: true },
-                        { id: "v2_yield", name: "Yield_Rate", type: "number", required: true }
+                        { id: "op_name", name: "Name", type: "string", required: true },
+                        { id: "op_rating", name: "Credit_Rating", type: "string", required: true },
+                        { id: "op_aum", name: "AUM_B", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Factory", sap_entity: "Plant_V200" }
-                },
-                {
-                    name: "RD_Center",
-                    description: "드림텍 R&D 연구소 - 신제품 개발 및 공정 혁신",
-                    category: "organization",
-                    source: "ai-mapped",
-                    properties: [
-                        { id: "rd_proj", name: "Active_Projects", type: "number", required: false },
-                        { id: "rd_pat", name: "Patent_Count", type: "number", required: false }
-                    ],
-                    metadata: { neo4j_label: "RDCenter" }
+                    metadata: { neo4j_label: "Company", role: "운영사" }
                 },
 
-                // ── 생산 공정 (Process) ───────────────────────────
+                // ── 프로젝트 (Project) ────────────────────────────────
                 {
-                    name: "SMT_Line",
-                    description: "표면실장기술 라인 - 솔더 페이스트 → 마운팅 → 리플로우",
-                    category: "process",
+                    name: "PF_Project",
+                    description: "부동산 PF 개발 사업 - 준공 전 개발형 프로젝트",
+                    category: "project",
                     source: "ai-mapped",
                     properties: [
-                        { id: "smt_util", name: "Utilization", type: "number", required: true },
-                        { id: "smt_eff", name: "OEE", type: "number", required: true },
-                        { id: "smt_ct", name: "Cycle_Time", type: "number", required: true },
-                        { id: "smt_tput", name: "Throughput", type: "number", required: false }
+                        { id: "pf_name", name: "Name", type: "string", required: true },
+                        { id: "pf_total", name: "Total_Amount_B", type: "number", required: true },
+                        { id: "pf_value", name: "Current_Value_B", type: "number", required: true },
+                        { id: "pf_comp", name: "Completion_Rate", type: "number", required: true },
+                        { id: "pf_presale", name: "Presale_Rate", type: "number", required: false },
+                        { id: "pf_status", name: "Status", type: "string", required: true }
                     ],
-                    metadata: { neo4j_label: "Line", mes_code: "SMT-01" }
+                    metadata: { neo4j_label: "Project", asset_type: "PF_DEVELOPMENT" }
                 },
                 {
-                    name: "Assembly_Line",
-                    description: "모듈 최종 조립 라인 - FPCB + 렌즈 + 하우징 결합",
-                    category: "process",
+                    name: "Real_Estate",
+                    description: "수익형 부동산 - 오피스/상업/물류/호텔 등",
+                    category: "project",
                     source: "ai-mapped",
                     properties: [
-                        { id: "asm_yield", name: "Yield_Rate", type: "number", required: true },
-                        { id: "asm_util", name: "Utilization", type: "number", required: true },
-                        { id: "asm_cpu", name: "Cost_Per_Unit", type: "number", required: false }
+                        { id: "re_name", name: "Name", type: "string", required: true },
+                        { id: "re_value", name: "Current_Value_B", type: "number", required: true },
+                        { id: "re_noi", name: "NOI_B", type: "number", required: true },
+                        { id: "re_cap", name: "Cap_Rate", type: "number", required: true },
+                        { id: "re_occ", name: "Occupancy_Rate", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Line", mes_code: "ASM-01" }
+                    metadata: { neo4j_label: "Project", asset_type: "REAL_ESTATE" }
                 },
                 {
-                    name: "Test_Line",
-                    description: "전기적 특성 및 기능 검사 공정 - PASS/FAIL 판정",
-                    category: "process",
+                    name: "Infrastructure",
+                    description: "SOC 인프라 - 도로/항만/공항/에너지 등",
+                    category: "project",
                     source: "ai-mapped",
                     properties: [
-                        { id: "tst_drate", name: "Defect_Rate", type: "number", required: true },
-                        { id: "tst_tput", name: "Throughput", type: "number", required: true },
-                        { id: "tst_grade", name: "Quality_Grade", type: "string", required: false }
+                        { id: "inf_name", name: "Name", type: "string", required: true },
+                        { id: "inf_value", name: "Current_Value_B", type: "number", required: true },
+                        { id: "inf_period", name: "Concession_Period_Y", type: "number", required: true },
+                        { id: "inf_rev", name: "Revenue_Type", type: "string", required: true }
                     ],
-                    metadata: { neo4j_label: "Line", mes_code: "TST-01" }
-                },
-
-                // ── 설비 (Equipment) ──────────────────────────────
-                {
-                    name: "AOI_Machine",
-                    description: "자동 광학 검사기 - SMT 후 납접 불량 자동 검출",
-                    category: "equipment",
-                    source: "ai-mapped",
-                    properties: [
-                        { id: "aoi_fcr", name: "False_Call_Rate", type: "number", required: true },
-                        { id: "aoi_oee", name: "OEE", type: "number", required: true },
-                        { id: "aoi_mtbf", name: "MTBF", type: "number", required: false }
-                    ],
-                    metadata: { neo4j_label: "Equipment", asset_id: "AOI-VN1-001" }
+                    metadata: { neo4j_label: "Project", asset_type: "INFRASTRUCTURE" }
                 },
                 {
-                    name: "SMT_Equipment",
-                    description: "SMT 설비군 - 스크린프린터/마운터/리플로우 오븐",
-                    category: "equipment",
+                    name: "Aircraft_Ship",
+                    description: "항공기/선박 - 리스 기반 운용자산",
+                    category: "project",
                     source: "ai-mapped",
                     properties: [
-                        { id: "smt_eq_oee", name: "OEE", type: "number", required: true },
-                        { id: "smt_eq_mtbf", name: "MTBF", type: "number", required: false },
-                        { id: "smt_eq_st", name: "Status", type: "string", required: true }
+                        { id: "as_name", name: "Name", type: "string", required: true },
+                        { id: "as_value", name: "Current_Value_B", type: "number", required: true },
+                        { id: "as_age", name: "Asset_Age_Y", type: "number", required: true },
+                        { id: "as_lease", name: "Monthly_Lease_B", type: "number", required: true },
+                        { id: "as_residual", name: "Residual_Value_B", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Equipment" }
+                    metadata: { neo4j_label: "Project", asset_type: "AIRCRAFT_SHIP" }
                 },
                 {
-                    name: "Assembly_Robot",
-                    description: "모듈 조립 자동화 로봇 - 고정밀 부품 결합",
-                    category: "equipment",
+                    name: "Renewable_Energy",
+                    description: "신재생에너지 - 태양광/풍력/ESS 등",
+                    category: "project",
                     source: "ai-mapped",
                     properties: [
-                        { id: "rob_util", name: "Utilization", type: "number", required: true },
-                        { id: "rob_status", name: "Status", type: "string", required: true },
-                        { id: "rob_mtbf", name: "MTBF", type: "number", required: false }
+                        { id: "rn_name", name: "Name", type: "string", required: true },
+                        { id: "rn_value", name: "Current_Value_B", type: "number", required: true },
+                        { id: "rn_cap", name: "Capacity_MW", type: "number", required: true },
+                        { id: "rn_ppa", name: "PPA_Price", type: "number", required: true },
+                        { id: "rn_cf", name: "Capacity_Factor", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Equipment", asset_id: "ROB-VN2-001" }
+                    metadata: { neo4j_label: "Project", asset_type: "RENEWABLE_ENERGY" }
                 },
 
-                // ── 부품/자재 (Material) ──────────────────────────
+                // ── 트랜치 (Tranche) ──────────────────────────────────
                 {
-                    name: "IC_Chip",
-                    description: "지문인식 핵심 IC 소자 (EgisTec/Goodix 공급)",
-                    category: "material",
+                    name: "Senior_Tranche",
+                    description: "선순위 트랜치 - 우선 상환, 낮은 리스크",
+                    category: "tranche",
                     source: "ai-mapped",
                     properties: [
-                        { id: "ic_stock", name: "Stock_Level", type: "number", required: true },
-                        { id: "ic_price", name: "Unit_Price", type: "number", required: true },
-                        { id: "ic_lt", name: "Lead_Time", type: "number", required: true },
-                        { id: "ic_moq", name: "Quantity", type: "number", required: false }
+                        { id: "sr_amount", name: "Amount_B", type: "number", required: true },
+                        { id: "sr_ratio", name: "Ratio", type: "number", required: true },
+                        { id: "sr_rate", name: "Interest_Rate", type: "number", required: true },
+                        { id: "sr_spread", name: "Spread_Bps", type: "number", required: true },
+                        { id: "sr_el", name: "Expected_Loss", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Component", sap_material: "MAT-IC-001" }
+                    metadata: { neo4j_label: "Tranche", seniority: "SENIOR" }
                 },
                 {
-                    name: "FPCB_Board",
-                    description: "연성 회로 기판 - 센서 모듈 핵심 기판",
-                    category: "material",
+                    name: "Mezzanine_Tranche",
+                    description: "중순위 트랜치 - 중간 위험/수익",
+                    category: "tranche",
                     source: "ai-mapped",
                     properties: [
-                        { id: "fpcb_stock", name: "Stock_Level", type: "number", required: true },
-                        { id: "fpcb_price", name: "Unit_Price", type: "number", required: true },
-                        { id: "fpcb_lt", name: "Lead_Time", type: "number", required: true }
+                        { id: "mz_amount", name: "Amount_B", type: "number", required: true },
+                        { id: "mz_ratio", name: "Ratio", type: "number", required: true },
+                        { id: "mz_rate", name: "Interest_Rate", type: "number", required: true },
+                        { id: "mz_spread", name: "Spread_Bps", type: "number", required: true },
+                        { id: "mz_el", name: "Expected_Loss", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Component", sap_material: "MAT-FPCB-001" }
+                    metadata: { neo4j_label: "Tranche", seniority: "MEZZANINE" }
                 },
                 {
-                    name: "Sensor_Lens",
-                    description: "광학 센서 렌즈 - 지문 인식률 핵심 부품",
-                    category: "material",
+                    name: "Junior_Tranche",
+                    description: "후순위 트랜치 - 높은 위험/수익",
+                    category: "tranche",
                     source: "ai-mapped",
                     properties: [
-                        { id: "lens_stock", name: "Stock_Level", type: "number", required: true },
-                        { id: "lens_price", name: "Unit_Price", type: "number", required: true },
-                        { id: "lens_rohs", name: "RoHS_Compliant", type: "boolean", required: true }
+                        { id: "jr_amount", name: "Amount_B", type: "number", required: true },
+                        { id: "jr_ratio", name: "Ratio", type: "number", required: true },
+                        { id: "jr_rate", name: "Interest_Rate", type: "number", required: true },
+                        { id: "jr_spread", name: "Spread_Bps", type: "number", required: true },
+                        { id: "jr_el", name: "Expected_Loss", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Component", sap_material: "MAT-LENS-001" }
-                },
-
-                // ── 제품 (Product) ────────────────────────────────
-                {
-                    name: "Sensor_Module_WIP",
-                    description: "반제품 센서 모듈 - SMT 완료, 조립 전 재공품",
-                    category: "product",
-                    source: "ai-mapped",
-                    properties: [
-                        { id: "wip_cnt", name: "WIP_Count", type: "number", required: true },
-                        { id: "wip_grade", name: "Quality_Grade", type: "string", required: false },
-                        { id: "wip_cpu", name: "Cost_Per_Unit", type: "number", required: false }
-                    ],
-                    metadata: { neo4j_label: "WIP", sap_material: "SFG-MOD-001" }
-                },
-                {
-                    name: "Galaxy_S24_Module",
-                    description: "삼성전자 갤럭시 S24 향 완제품 지문인식 모듈 (량산)",
-                    category: "product",
-                    source: "ai-mapped",
-                    properties: [
-                        { id: "s24_grade", name: "Quality_Grade", type: "string", required: true },
-                        { id: "s24_drate", name: "Defect_Rate", type: "number", required: true },
-                        { id: "s24_price", name: "Unit_Price", type: "number", required: true },
-                        { id: "s24_iso", name: "ISO_Certified", type: "boolean", required: true }
-                    ],
-                    metadata: { neo4j_label: "Product", customer_pn: "SEC-FP-S24-001" }
-                },
-                {
-                    name: "Galaxy_S25_Module",
-                    description: "삼성전자 갤럭시 S25 향 차세대 지문인식 모듈 (개발중)",
-                    category: "product",
-                    source: "ai-mapped",
-                    properties: [
-                        { id: "s25_grade", name: "Quality_Grade", type: "string", required: false },
-                        { id: "s25_price", name: "Unit_Price", type: "number", required: false },
-                        { id: "s25_st", name: "Status", type: "string", required: true }
-                    ],
-                    metadata: { neo4j_label: "Product", customer_pn: "SEC-FP-S25-001" }
+                    metadata: { neo4j_label: "Tranche", seniority: "JUNIOR" }
                 },
 
-                // ── 공급망 (Supply Chain) ─────────────────────────
+                // ── 펀드 (Fund) ───────────────────────────────────────
                 {
-                    name: "IC_Supplier",
-                    description: "IC 칩 공급업체 (EgisTec/Goodix/IDEX) - 전략 부품 조달",
-                    category: "supply_chain",
+                    name: "Investment_Fund",
+                    description: "투자 펀드 - 부동산/인프라/PEF 등",
+                    category: "fund",
                     source: "ai-mapped",
                     properties: [
-                        { id: "sup_lt", name: "Lead_Time", type: "number", required: true },
-                        { id: "sup_rating", name: "Quality_Grade", type: "string", required: true },
-                        { id: "sup_region", name: "Region", type: "string", required: true }
+                        { id: "fund_name", name: "Name", type: "string", required: true },
+                        { id: "fund_type", name: "Type", type: "string", required: true },
+                        { id: "fund_aum", name: "AUM_B", type: "number", required: true },
+                        { id: "fund_target", name: "Target_Return", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Supplier" }
+                    metadata: { neo4j_label: "Fund" }
                 },
+
+                // ── 약정 (Covenant) ───────────────────────────────────
                 {
-                    name: "SEC_Factory",
-                    description: "삼성전자 스마트폰 조립 공장 (구미/베트남) - 핵심 고객",
-                    category: "supply_chain",
+                    name: "Financial_Covenant",
+                    description: "재무 약정 - LTV/DSCR/ICR 등 기준",
+                    category: "covenant",
                     source: "ai-mapped",
                     properties: [
-                        { id: "sec_sched", name: "Delivery_Rate", type: "number", required: true },
-                        { id: "sec_qty", name: "Quantity", type: "number", required: true },
-                        { id: "sec_region", name: "Region", type: "string", required: true }
+                        { id: "cov_type", name: "Type", type: "string", required: true },
+                        { id: "cov_threshold", name: "Threshold", type: "number", required: true },
+                        { id: "cov_current", name: "Current_Value", type: "number", required: true },
+                        { id: "cov_status", name: "Status", type: "string", required: true },
+                        { id: "cov_breach", name: "Breach_Count", type: "number", required: false }
                     ],
-                    metadata: { neo4j_label: "Customer", customer_code: "SEC-001" }
+                    metadata: { neo4j_label: "Covenant" }
+                },
+
+                // ── 담보 (Collateral) ─────────────────────────────────
+                {
+                    name: "Collateral_Asset",
+                    description: "담보 자산 - 토지/건물/채권/주식/보증 등",
+                    category: "collateral",
+                    source: "ai-mapped",
+                    properties: [
+                        { id: "col_type", name: "Type", type: "string", required: true },
+                        { id: "col_appr", name: "Appraised_Value_B", type: "number", required: true },
+                        { id: "col_liq", name: "Liquidation_Value_B", type: "number", required: true },
+                        { id: "col_haircut", name: "Haircut", type: "number", required: true }
+                    ],
+                    metadata: { neo4j_label: "Collateral" }
+                },
+
+                // ── 신용이벤트 (Credit Event) ─────────────────────────
+                {
+                    name: "Credit_Event",
+                    description: "신용 이벤트 - 부도/구조조정/등급하락 등",
+                    category: "credit_event",
+                    source: "ai-mapped",
+                    properties: [
+                        { id: "evt_type", name: "Type", type: "string", required: true },
+                        { id: "evt_date", name: "Occurred_Date", type: "date", required: true },
+                        { id: "evt_severity", name: "Severity", type: "string", required: true },
+                        { id: "evt_loss", name: "Estimated_Loss_B", type: "number", required: false },
+                        { id: "evt_resolved", name: "Resolved", type: "boolean", required: false }
+                    ],
+                    metadata: { neo4j_label: "CreditEvent" }
                 }
             ];
 
@@ -447,41 +435,37 @@ export const OntologyService = {
                 seedBatch.set(ref, obj);
             });
 
-            // ═══════════════════════════════════════════════════════
-            // ▶ LINKS (20개) - 드림텍 전 비즈니스 관계
-            // ═══════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════════════
+            // ▶ LINKS (18개) - 대체투자 비즈니스 관계
+            // ═══════════════════════════════════════════════════════════════
             const links = [
-                // 조직 관계
-                { name: "MANAGES", fromType: "Global_HQ", toType: "Vina1_Factory", bidirectional: false, neo4jType: "MANAGES", description: "본사의 공장 관리 권한" },
-                { name: "MANAGES", fromType: "Global_HQ", toType: "Vina2_Factory", bidirectional: false, neo4jType: "MANAGES", description: "본사의 공장 관리 권한" },
-                { name: "MANAGES", fromType: "Global_HQ", toType: "RD_Center", bidirectional: false, neo4jType: "MANAGES", description: "본사의 R&D 센터 관리" },
+                // 회사-프로젝트 관계
+                { name: "RESPONSIBLE_FOR", fromType: "Constructor", toType: "PF_Project", bidirectional: false, neo4jType: "RESPONSIBLE_FOR", description: "시공사의 책임준공 담당" },
+                { name: "DEVELOPS", fromType: "Developer", toType: "PF_Project", bidirectional: false, neo4jType: "DEVELOPS", description: "시행사의 개발 사업 추진" },
+                { name: "OPERATES", fromType: "Operator", toType: "Real_Estate", bidirectional: false, neo4jType: "OPERATES", description: "운영사의 자산 운영" },
+                { name: "OPERATES", fromType: "Operator", toType: "Infrastructure", bidirectional: false, neo4jType: "OPERATES", description: "운영사의 인프라 운영" },
+                { name: "LEASES", fromType: "Operator", toType: "Aircraft_Ship", bidirectional: false, neo4jType: "LEASES", description: "운영사의 항공기/선박 리스" },
 
-                // 공장-공정 관계
-                { name: "OPERATES", fromType: "Vina1_Factory", toType: "SMT_Line", bidirectional: false, neo4jType: "OPERATES", description: "Vina1이 SMT 라인 운영" },
-                { name: "OPERATES", fromType: "Vina2_Factory", toType: "Assembly_Line", bidirectional: false, neo4jType: "OPERATES", description: "Vina2가 조립 라인 운영" },
-                { name: "OPERATES", fromType: "Vina2_Factory", toType: "Test_Line", bidirectional: false, neo4jType: "OPERATES", description: "Vina2가 테스트 라인 운영" },
+                // 프로젝트-트랜치 관계
+                { name: "HAS_TRANCHE", fromType: "PF_Project", toType: "Senior_Tranche", bidirectional: false, neo4jType: "HAS_TRANCHE", description: "프로젝트의 선순위 트랜치" },
+                { name: "HAS_TRANCHE", fromType: "PF_Project", toType: "Mezzanine_Tranche", bidirectional: false, neo4jType: "HAS_TRANCHE", description: "프로젝트의 중순위 트랜치" },
+                { name: "HAS_TRANCHE", fromType: "PF_Project", toType: "Junior_Tranche", bidirectional: false, neo4jType: "HAS_TRANCHE", description: "프로젝트의 후순위 트랜치" },
+                { name: "HAS_TRANCHE", fromType: "Real_Estate", toType: "Senior_Tranche", bidirectional: false, neo4jType: "HAS_TRANCHE", description: "부동산의 선순위 트랜치" },
 
-                // 공정-설비 관계
-                { name: "INSTALLS", fromType: "SMT_Line", toType: "SMT_Equipment", bidirectional: false, neo4jType: "INSTALLS", description: "SMT 라인에 설비 배치" },
-                { name: "INSTALLS", fromType: "SMT_Line", toType: "AOI_Machine", bidirectional: false, neo4jType: "INSTALLS", description: "SMT 라인 내 AOI 배치" },
-                { name: "INSTALLS", fromType: "Assembly_Line", toType: "Assembly_Robot", bidirectional: false, neo4jType: "INSTALLS", description: "조립 라인에 로봇 배치" },
+                // 트랜치-펀드 관계
+                { name: "HELD_BY", fromType: "Senior_Tranche", toType: "Investment_Fund", bidirectional: false, neo4jType: "HELD_BY", description: "펀드의 선순위 보유" },
+                { name: "HELD_BY", fromType: "Mezzanine_Tranche", toType: "Investment_Fund", bidirectional: false, neo4jType: "HELD_BY", description: "펀드의 중순위 보유" },
+                { name: "HELD_BY", fromType: "Junior_Tranche", toType: "Investment_Fund", bidirectional: false, neo4jType: "HELD_BY", description: "펀드의 후순위 보유" },
 
-                // 자재 소비 관계
-                { name: "CONSUMES", fromType: "SMT_Line", toType: "IC_Chip", bidirectional: false, neo4jType: "CONSUMES", description: "SMT 공정에서 IC 칩 소비" },
-                { name: "CONSUMES", fromType: "SMT_Line", toType: "FPCB_Board", bidirectional: false, neo4jType: "CONSUMES", description: "SMT 공정에서 FPCB 소비" },
-                { name: "CONSUMES", fromType: "Assembly_Line", toType: "Sensor_Lens", bidirectional: false, neo4jType: "CONSUMES", description: "조립 공정에서 렌즈 소비" },
+                // 프로젝트-약정/담보 관계
+                { name: "HAS_COVENANT", fromType: "PF_Project", toType: "Financial_Covenant", bidirectional: false, neo4jType: "HAS_COVENANT", description: "프로젝트의 재무 약정" },
+                { name: "HAS_COVENANT", fromType: "Real_Estate", toType: "Financial_Covenant", bidirectional: false, neo4jType: "HAS_COVENANT", description: "부동산의 재무 약정" },
+                { name: "SECURED_BY", fromType: "PF_Project", toType: "Collateral_Asset", bidirectional: false, neo4jType: "SECURED_BY", description: "프로젝트의 담보 설정" },
+                { name: "SECURED_BY", fromType: "Real_Estate", toType: "Collateral_Asset", bidirectional: false, neo4jType: "SECURED_BY", description: "부동산의 담보 설정" },
 
-                // 생산 흐름 관계
-                { name: "PRODUCES", fromType: "SMT_Line", toType: "Sensor_Module_WIP", bidirectional: false, neo4jType: "PRODUCES", description: "SMT 공정이 반제품 생산" },
-                { name: "VERIFIES", fromType: "AOI_Machine", toType: "Sensor_Module_WIP", bidirectional: false, neo4jType: "VERIFIES", description: "AOI가 반제품 품질 검증" },
-                { name: "FEEDS_INTO", fromType: "Sensor_Module_WIP", toType: "Assembly_Line", bidirectional: false, neo4jType: "FEEDS_INTO", description: "반제품이 조립 라인에 투입" },
-                { name: "FINISHES", fromType: "Assembly_Line", toType: "Galaxy_S24_Module", bidirectional: false, neo4jType: "FINISHES", description: "조립 공정이 S24 모듈 완성" },
-                { name: "FINISHES", fromType: "Assembly_Line", toType: "Galaxy_S25_Module", bidirectional: false, neo4jType: "FINISHES", description: "조립 공정이 S25 모듈 완성" },
-                { name: "INSPECTS", fromType: "Test_Line", toType: "Galaxy_S24_Module", bidirectional: false, neo4jType: "INSPECTS", description: "테스트 라인에서 완제품 최종 검사" },
-
-                // 공급망 관계
-                { name: "SUPPLIES_TO", fromType: "IC_Supplier", toType: "IC_Chip", bidirectional: false, neo4jType: "SUPPLIES_TO", description: "공급사가 IC 칩 납품" },
-                { name: "SHIPS_TO", fromType: "Galaxy_S24_Module", toType: "SEC_Factory", bidirectional: false, neo4jType: "SHIPS_TO", description: "완제품 모듈을 삼성전자에 납품" }
+                // 신용이벤트 관계
+                { name: "TRIGGERS", fromType: "Constructor", toType: "Credit_Event", bidirectional: false, neo4jType: "TRIGGERS", description: "시공사 관련 신용 이벤트" },
+                { name: "AFFECTS", fromType: "Credit_Event", toType: "PF_Project", bidirectional: false, neo4jType: "AFFECTS", description: "신용 이벤트가 프로젝트에 영향" }
             ];
 
             links.forEach(link => {
@@ -489,41 +473,51 @@ export const OntologyService = {
                 seedBatch.set(ref, link);
             });
 
-            // ═══════════════════════════════════════════════════════
-            // ▶ PROPERTIES (22개) - 전사 속성 풀
-            // ═══════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════════════
+            // ▶ PROPERTIES (28개) - 대체투자 속성 풀
+            // ═══════════════════════════════════════════════════════════════
             const props = [
-                // 생산 효율 지표
-                { name: "Utilization", dataType: "number", description: "설비/라인 가동율 (%)", validation: "0-100", usedBy: ["SMT_Line", "Assembly_Line", "Assembly_Robot"], source: "ai-mapped" },
-                { name: "OEE", dataType: "number", description: "설비종합효율 - Overall Equipment Effectiveness (%)", validation: "0-100", usedBy: ["SMT_Line", "AOI_Machine", "SMT_Equipment"], source: "ai-mapped" },
-                { name: "Yield_Rate", dataType: "number", description: "공정 수율 - 불량 제외 양품 비율 (%)", validation: "0-100", usedBy: ["Assembly_Line", "Vina2_Factory"], source: "ai-mapped" },
-                { name: "Defect_Rate", dataType: "number", description: "불량율 - 전체 대비 불량품 비율 (%)", validation: "0-100", usedBy: ["Test_Line", "Galaxy_S24_Module"], source: "ai-mapped" },
-                { name: "Throughput", dataType: "number", description: "처리량 - 단위시간당 생산량 (pcs/hr)", usedBy: ["SMT_Line", "Test_Line"], source: "ai-mapped" },
-                { name: "Cycle_Time", dataType: "number", description: "사이클타임 - 제품 1개 처리 소요시간 (sec)", usedBy: ["SMT_Line"], source: "ai-mapped" },
-                { name: "MTBF", dataType: "number", description: "평균 고장 간격 - Mean Time Between Failures (hr)", usedBy: ["AOI_Machine", "SMT_Equipment", "Assembly_Robot"], source: "ai-mapped" },
-                { name: "False_Call_Rate", dataType: "number", description: "AOI 과검출율 - 양품을 불량으로 오판하는 비율 (%)", usedBy: ["AOI_Machine"], source: "ai-mapped" },
+                // 가치평가 지표
+                { name: "Current_Value_B", dataType: "number", description: "현재 가치 (억원)", usedBy: ["PF_Project", "Real_Estate", "Infrastructure", "Aircraft_Ship", "Renewable_Energy"], source: "ai-mapped" },
+                { name: "Total_Amount_B", dataType: "number", description: "총 사업비 (억원)", usedBy: ["PF_Project"], source: "ai-mapped" },
+                { name: "NOI_B", dataType: "number", description: "순영업이익 Net Operating Income (억원)", usedBy: ["Real_Estate"], source: "ai-mapped" },
+                { name: "Cap_Rate", dataType: "number", description: "자본환원율 Capitalization Rate (%)", validation: "0-20", usedBy: ["Real_Estate"], source: "ai-mapped" },
+                { name: "IRR", dataType: "number", description: "내부수익률 Internal Rate of Return (%)", usedBy: ["PF_Project", "Real_Estate", "Infrastructure"], source: "ai-mapped" },
+                { name: "NPV_B", dataType: "number", description: "순현재가치 Net Present Value (억원)", usedBy: ["PF_Project", "Real_Estate"], source: "ai-mapped" },
 
-                // 재고/물류 지표
-                { name: "Stock_Level", dataType: "number", description: "재고 수위 - 현재 보유 재고량 (pcs)", usedBy: ["IC_Chip", "FPCB_Board", "Sensor_Lens"], source: "ai-mapped" },
-                { name: "Lead_Time", dataType: "number", description: "리드타임 - 발주에서 입고까지 소요 기간 (일)", usedBy: ["IC_Chip", "FPCB_Board", "IC_Supplier"], source: "ai-mapped" },
-                { name: "WIP_Count", dataType: "number", description: "재공품 수량 - 공정 중인 반제품 수 (pcs)", usedBy: ["Sensor_Module_WIP"], source: "ai-mapped" },
-                { name: "Quantity", dataType: "number", description: "수량 - 범용 수량 필드 (pcs)", usedBy: ["IC_Chip", "SEC_Factory"], source: "ai-mapped" },
-                { name: "Delivery_Rate", dataType: "number", description: "납기 준수율 - 약속 납기 이내 납품 비율 (%)", validation: "0-100", usedBy: ["SEC_Factory"], source: "ai-mapped" },
+                // 리스크 지표
+                { name: "LTV", dataType: "number", description: "담보인정비율 Loan-to-Value (%)", validation: "0-100", usedBy: ["PF_Project", "Real_Estate"], source: "ai-mapped" },
+                { name: "DSCR", dataType: "number", description: "원리금상환비율 Debt Service Coverage Ratio (배)", usedBy: ["PF_Project", "Real_Estate", "Infrastructure"], source: "ai-mapped" },
+                { name: "ICR", dataType: "number", description: "이자보상비율 Interest Coverage Ratio (배)", usedBy: ["PF_Project", "Real_Estate"], source: "ai-mapped" },
+                { name: "Default_Probability", dataType: "number", description: "부도확률 PD (%)", validation: "0-100", usedBy: ["Constructor", "Developer"], source: "ai-mapped" },
+                { name: "Expected_Loss", dataType: "number", description: "예상손실 EL (%)", usedBy: ["Senior_Tranche", "Mezzanine_Tranche", "Junior_Tranche"], source: "ai-mapped" },
+                { name: "Risk_Score", dataType: "number", description: "종합 리스크 점수 (0-100)", validation: "0-100", usedBy: ["PF_Project", "Real_Estate"], source: "ai-mapped" },
 
-                // 원가/재무 지표
-                { name: "Unit_Price", dataType: "number", description: "개당 단가 (KRW)", usedBy: ["IC_Chip", "FPCB_Board", "Galaxy_S24_Module"], source: "ai-mapped" },
-                { name: "Cost_Per_Unit", dataType: "number", description: "개당 원가 - 제조원가 (KRW)", usedBy: ["Assembly_Line", "Sensor_Module_WIP"], source: "ai-mapped" },
-                { name: "Monthly_Capacity_K", dataType: "number", description: "월 생산능력 (천 개 단위)", usedBy: ["Vina1_Factory", "Vina2_Factory"], source: "ai-mapped" },
-                { name: "Annual_Revenue_B_KRW", dataType: "number", description: "연간 매출 (억 원)", usedBy: ["Global_HQ"], source: "ai-mapped" },
+                // 프로젝트 진행 지표
+                { name: "Completion_Rate", dataType: "number", description: "공정률 (%)", validation: "0-100", usedBy: ["PF_Project"], source: "ai-mapped" },
+                { name: "Presale_Rate", dataType: "number", description: "분양률 (%)", validation: "0-100", usedBy: ["PF_Project"], source: "ai-mapped" },
+                { name: "Occupancy_Rate", dataType: "number", description: "임대율/가동률 (%)", validation: "0-100", usedBy: ["Real_Estate"], source: "ai-mapped" },
+                { name: "Status", dataType: "string", description: "프로젝트 상태 (개발중/준공완료/운영중/부실)", usedBy: ["PF_Project", "Real_Estate"], source: "ai-mapped" },
 
-                // 품질/인증 지표
-                { name: "Quality_Grade", dataType: "string", description: "품질 등급 (S/A/B/C/NG)", usedBy: ["Galaxy_S24_Module", "Test_Line", "IC_Supplier"], source: "ai-mapped" },
-                { name: "RoHS_Compliant", dataType: "boolean", description: "유해물질 제한 지침(RoHS) 준수 여부", usedBy: ["Sensor_Lens", "FPCB_Board"], source: "ai-mapped" },
-                { name: "ISO_Certified", dataType: "boolean", description: "ISO 품질 인증 보유 여부 (ISO 9001/IATF16949)", usedBy: ["Galaxy_S24_Module"], source: "ai-mapped" },
+                // 트랜치 지표
+                { name: "Amount_B", dataType: "number", description: "투자 금액 (억원)", usedBy: ["Senior_Tranche", "Mezzanine_Tranche", "Junior_Tranche"], source: "ai-mapped" },
+                { name: "Ratio", dataType: "number", description: "전체 대비 비율 (%)", usedBy: ["Senior_Tranche", "Mezzanine_Tranche", "Junior_Tranche"], source: "ai-mapped" },
+                { name: "Interest_Rate", dataType: "number", description: "금리 (연 %)", usedBy: ["Senior_Tranche", "Mezzanine_Tranche", "Junior_Tranche"], source: "ai-mapped" },
+                { name: "Spread_Bps", dataType: "number", description: "스프레드 (bp)", usedBy: ["Senior_Tranche", "Mezzanine_Tranche", "Junior_Tranche"], source: "ai-mapped" },
 
-                // 일반 지표
-                { name: "Status", dataType: "string", description: "현재 운영 상태 (Running/Idle/Maintenance/Error)", usedBy: ["SMT_Equipment", "Assembly_Robot", "Galaxy_S25_Module"], source: "ai-mapped" },
-                { name: "Region", dataType: "string", description: "지역 코드 (KR/VN/CN 등)", usedBy: ["Vina1_Factory", "Vina2_Factory", "IC_Supplier", "SEC_Factory"], source: "ai-mapped" }
+                // 신용 지표
+                { name: "Credit_Rating", dataType: "string", description: "신용등급 (AAA~D)", usedBy: ["Constructor", "Developer", "Operator"], source: "ai-mapped" },
+                { name: "Covenant_Status", dataType: "string", description: "약정 상태 (COMPLIANT/WARNING/BREACH/WAIVED)", usedBy: ["Financial_Covenant"], source: "ai-mapped" },
+                { name: "Breach_Count", dataType: "number", description: "약정 위반 횟수", usedBy: ["Financial_Covenant"], source: "ai-mapped" },
+
+                // 담보 지표
+                { name: "Appraised_Value_B", dataType: "number", description: "감정가 (억원)", usedBy: ["Collateral_Asset"], source: "ai-mapped" },
+                { name: "Liquidation_Value_B", dataType: "number", description: "청산가치 (억원)", usedBy: ["Collateral_Asset"], source: "ai-mapped" },
+                { name: "Haircut", dataType: "number", description: "담보인정비율 차감률 (%)", validation: "0-100", usedBy: ["Collateral_Asset"], source: "ai-mapped" },
+
+                // 펀드 지표
+                { name: "AUM_B", dataType: "number", description: "운용자산 규모 Assets Under Management (억원)", usedBy: ["Investment_Fund", "Operator"], source: "ai-mapped" },
+                { name: "Target_Return", dataType: "number", description: "목표 수익률 (%)", usedBy: ["Investment_Fund"], source: "ai-mapped" }
             ];
 
             props.forEach(prop => {
@@ -533,12 +527,12 @@ export const OntologyService = {
 
             await seedBatch.commit();
 
-            console.log(`[K-Palantir] Seed Complete!`);
+            console.log(`[이지자산평가] Seed Complete!`);
             console.log(`  Objects: ${objects.length} | Links: ${links.length} | Properties: ${props.length}`);
-            console.log("  Categories: Organization(4) + Process(3) + Equipment(3) + Material(3) + Product(3) + SupplyChain(2)");
+            console.log("  Categories: Company(3) + Project(5) + Tranche(3) + Fund(1) + Covenant(1) + Collateral(1) + CreditEvent(1)");
 
         } catch (error) {
-            console.error("[K-Palantir] Critical seeding error:", error);
+            console.error("[이지자산평가] Critical seeding error:", error);
             throw error;
         }
     },
@@ -551,7 +545,7 @@ export const OntologyService = {
         links: Omit<LinkType, "id">[],
         props: Omit<PropertyType, "id">[]
     ): Promise<void> {
-        console.log("[K-Palantir] Seeding custom wizard data...");
+        console.log("[이지자산평가] Seeding custom wizard data...");
         try {
             // 기존 데이터 삭제
             const collections = ["objectTypes", "propertyTypes", "linkTypes"];
@@ -578,9 +572,9 @@ export const OntologyService = {
             });
             await saveBatch.commit();
 
-            console.log(`[K-Palantir] Custom seed complete: ${objects.length} objects, ${links.length} links, ${props.length} properties`);
+            console.log(`[이지자산평가] Custom seed complete: ${objects.length} objects, ${links.length} links, ${props.length} properties`);
         } catch (error) {
-            console.error("[K-Palantir] Custom seed error:", error);
+            console.error("[이지자산평가] Custom seed error:", error);
             throw error;
         }
     }
