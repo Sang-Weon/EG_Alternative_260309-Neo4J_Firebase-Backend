@@ -24,31 +24,31 @@ export function SolutionDetailDialog({ isOpen, onClose, solution }: SolutionDeta
   // 실행 일정 타임라인
   const timeline = [
     {
-      phase: "준비",
-      department: "생산관리팀",
+      phase: "분석",
+      department: "가치평가팀",
       duration: "1일",
-      tasks: ["설비 가동 중지 계획 수립", "부품 발주 및 납품 확인", "작업자 안전 교육"],
+      tasks: ["리스크 지표 재점검", "시장 데이터 수집", "시나리오 분석 준비"],
       status: "완료",
     },
     {
-      phase: "진단",
-      department: "설비팀",
+      phase: "협의",
+      department: "투자심사팀",
       duration: "1일",
-      tasks: ["온도 센서 정밀 검사", "PID 컨트롤러 오류 로그 분석", "배선 및 연결부 점검"],
+      tasks: ["약정 조건 재검토", "채권자 협의 안건 준비", "내부 승인 절차"],
       status: "진행중",
     },
     {
-      phase: "교체",
-      department: "설비팀 + 외주",
-      duration: "0.5일",
-      tasks: ["불량 부품 제거", "신규 PID 컨트롤러 설치", "배선 재작업"],
+      phase: "실행",
+      department: "펀드운용팀 + 법무팀",
+      duration: "2일",
+      tasks: ["계약 수정안 작성", "이해관계자 합의", "서류 체결"],
       status: "대기",
     },
     {
-      phase: "검증",
-      department: "품질관리팀",
-      duration: "0.5일",
-      tasks: ["온도 캘리브레이션", "테스트 런 10회 실행", "품질 데이터 수집 및 분석"],
+      phase: "모니터링",
+      department: "리스크관리팀",
+      duration: "지속",
+      tasks: ["지표 모니터링 강화", "조기경보 임계치 조정", "정기 보고 체계 구축"],
       status: "대기",
     },
   ]
@@ -56,42 +56,42 @@ export function SolutionDetailDialog({ isOpen, onClose, solution }: SolutionDeta
   // 담당 부서별 역할
   const departments = [
     {
-      name: "생산관리팀",
-      role: "총괄 조정",
-      leader: "김철수 차장",
+      name: "가치평가팀",
+      role: "분석 주체",
+      leader: "김철수 심사역",
       members: 3,
-      responsibilities: ["프로젝트 일정 관리", "부서 간 협업 조정", "경영진 보고"],
+      responsibilities: ["DCF/NPV 재산정", "시나리오 분석", "공정가치 평가"],
     },
     {
-      name: "설비팀",
-      role: "실행 주체",
-      leader: "이영희 과장",
-      members: 5,
-      responsibilities: ["설비 점검 및 진단", "부품 교체 작업", "설비 재가동 및 모니터링"],
-    },
-    {
-      name: "품질관리팀",
-      role: "검증 및 승인",
-      leader: "박민수 과장",
+      name: "리스크관리팀",
+      role: "모니터링",
+      leader: "이영희 팀장",
       members: 4,
-      responsibilities: ["품질 기준 검증", "테스트 런 감독", "최종 승인"],
+      responsibilities: ["LTV/DSCR 모니터링", "조기경보 관리", "약정 위반 추적"],
     },
     {
-      name: "구매팀",
+      name: "투자심사팀",
+      role: "의사결정",
+      leader: "박민수 본부장",
+      members: 5,
+      responsibilities: ["투자 의사결정", "구조조정 승인", "Exit 전략 수립"],
+    },
+    {
+      name: "법무팀",
       role: "지원",
-      leader: "최지현 대리",
+      leader: "최지현 변호사",
       members: 2,
-      responsibilities: ["부품 긴급 발주", "외주 업체 계약", "예산 집행"],
+      responsibilities: ["계약서 검토", "법적 리스크 검토", "협상 지원"],
     },
   ]
 
   // KPI 연관성 분석 (방사형 차트)
   const kpiRadarData = [
-    { kpi: "생산량", 현재: 87, 목표: 100, 개선후: 98 },
-    { kpi: "품질", 현재: 65, 목표: 95, 개선후: 92 },
-    { kpi: "비용효율", 현재: 78, 목표: 90, 개선후: 88 },
-    { kpi: "납기준수", 현재: 82, 목표: 95, 개선후: 93 },
-    { kpi: "설비가동률", 현재: 88, 목표: 95, 개선후: 94 },
+    { kpi: "수익률", 현재: 72, 목표: 90, 개선후: 85 },
+    { kpi: "리스크", 현재: 45, 목표: 80, 개선후: 75 },
+    { kpi: "유동성", 현재: 68, 목표: 85, 개선후: 82 },
+    { kpi: "담보가치", 현재: 78, 목표: 90, 개선후: 88 },
+    { kpi: "신용등급", 현재: 65, 목표: 85, 개선후: 80 },
   ]
 
   // 효과 분석 데이터
@@ -99,26 +99,26 @@ export function SolutionDetailDialog({ isOpen, onClose, solution }: SolutionDeta
     {
       category: "직접 효과",
       items: [
-        { metric: "불량률 감소", value: "0.68% → 0.20%", impact: "월 1,200만원 절감" },
-        { metric: "생산량 회복", value: "87% → 100%", impact: "월 매출 4,500만원 증가" },
-        { metric: "설비 가동률", value: "88% → 94%", impact: "생산 효율 6% 개선" },
+        { metric: "LTV 개선", value: "78% → 65%", impact: "담보 여유율 확보" },
+        { metric: "DSCR 개선", value: "1.05x → 1.35x", impact: "원리금 상환 안정성 확보" },
+        { metric: "예상손실 감소", value: "12억 → 5억", impact: "충당금 7억원 환입 가능" },
       ],
     },
     {
       category: "간접 효과",
       items: [
-        { metric: "작업자 신뢰도", value: "+15%", impact: "안전사고 감소 예상" },
-        { metric: "고객 만족도", value: "+12%", impact: "SEC 평가 점수 상승" },
-        { metric: "예방 정비 체계", value: "구축", impact: "향후 유사 이슈 80% 예방" },
+        { metric: "포트폴리오 안정성", value: "+15%", impact: "연쇄부도 리스크 차단" },
+        { metric: "투자자 신뢰도", value: "+12%", impact: "LP 추가 출자 가능성" },
+        { metric: "시장 평판", value: "개선", impact: "향후 딜 소싱 유리" },
       ],
     },
   ]
 
   // 리스크 및 제약사항
   const risks = [
-    { level: "높음", description: "부품 납기 지연 시 전체 일정 2-3일 지연", mitigation: "대체 공급업체 사전 확보" },
-    { level: "중간", description: "테스트 런 중 추가 문제 발견 가능성", mitigation: "예비 시간 1일 확보" },
-    { level: "낮음", description: "외주 작업자 숙련도 이슈", mitigation: "사내 설비팀 감독 배치" },
+    { level: "높음", description: "시공사 추가 지원 불가 시 프로젝트 지연 가능성", mitigation: "대체 시공사 후보 사전 확보" },
+    { level: "중간", description: "금리 인상 시 재융자 조건 악화 가능성", mitigation: "금리 헷지 상품 검토" },
+    { level: "낮음", description: "담보 재평가 시 가치 하락 가능성", mitigation: "보수적 시나리오 반영" },
   ]
 
   return (
@@ -291,7 +291,7 @@ export function SolutionDetailDialog({ isOpen, onClose, solution }: SolutionDeta
               <Card className="bg-zinc-800/50 border-zinc-700 p-4">
                 <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
                   <Target className="w-4 h-4 text-green-400" />
-                  KPI 영향 분석
+                  투자 지표 영향 분석
                 </h3>
                 <ResponsiveContainer width="100%" height={280}>
                   <RadarChart data={kpiRadarData}>

@@ -21,18 +21,18 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
   const chartData = [
     {
       name: "현재",
-      비용: 850000,
-      매출: 1200000,
+      손실: 120,
+      회수예상: 850,
     },
     {
       name: "옵션1",
-      비용: 920000,
-      매출: 1350000,
+      손실: 45,
+      회수예상: 920,
     },
     {
       name: "옵션2",
-      비용: 880000,
-      매출: 1180000,
+      손실: 80,
+      회수예상: 880,
     },
   ]
 
@@ -41,7 +41,7 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
   }
 
   const getOptionLabel = () => {
-    return selectedOption === "option1" ? "옵션 1: 긴급 생산 증대" : "옵션 2: 재고 활용"
+    return selectedOption === "option1" ? "옵션 1: 구조조정 & 추가 담보" : "옵션 2: 분할 매각"
   }
 
   return (
@@ -53,8 +53,8 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
             <AlertTriangle className="w-3 h-3 mr-1" />
             긴급 알림
           </Badge>
-          <h2 className="font-semibold text-base lg:text-lg mb-1">SEC 수요 변경</h2>
-          <p className="text-xs lg:text-sm text-zinc-400">Galaxy S25 수요 +2000대 증가</p>
+          <h2 className="font-semibold text-base lg:text-lg mb-1">약정 위반 경고</h2>
+          <p className="text-xs lg:text-sm text-zinc-400">송도 PF 프로젝트 LTV 80% 초과</p>
         </div>
 
         {/* 시나리오 옵션 */}
@@ -70,16 +70,16 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
                 <div className="flex items-start gap-3">
                   <RadioGroupItem value="option1" id="option1" className="mt-1" />
                   <Label htmlFor="option1" className="cursor-pointer flex-1">
-                    <div className="font-semibold text-sm mb-1">옵션 1: 긴급 생산 증대</div>
-                    <p className="text-xs text-zinc-400 mb-2">천안 공장 야간 라인 가동</p>
+                    <div className="font-semibold text-sm mb-1">옵션 1: 구조조정 & 추가 담보</div>
+                    <p className="text-xs text-zinc-400 mb-2">시공사 신용보강 + 담보 추가 설정</p>
                     <div className="flex flex-wrap gap-2 text-xs">
                       <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/50">
                         <TrendingUp className="w-3 h-3 mr-1" />
-                        매출 +12.5%
+                        회수율 +8%
                       </Badge>
                       <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/50">
                         <TrendingDown className="w-3 h-3 mr-1" />
-                        비용 +8.2%
+                        비용 45억
                       </Badge>
                     </div>
                   </Label>
@@ -94,16 +94,16 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
                 <div className="flex items-start gap-3">
                   <RadioGroupItem value="option2" id="option2" className="mt-1" />
                   <Label htmlFor="option2" className="cursor-pointer flex-1">
-                    <div className="font-semibold text-sm mb-1">옵션 2: 재고 활용</div>
-                    <p className="text-xs text-zinc-400 mb-2">베트남 공장 재고 전환 배송</p>
+                    <div className="font-semibold text-sm mb-1">옵션 2: 분할 매각</div>
+                    <p className="text-xs text-zinc-400 mb-2">선순위 매각 + 후순위 손실 인식</p>
                     <div className="flex flex-wrap gap-2 text-xs">
                       <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/50">
                         <TrendingDown className="w-3 h-3 mr-1" />
-                        매출 -1.7%
+                        회수율 -2%
                       </Badge>
                       <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/50">
                         <TrendingUp className="w-3 h-3 mr-1" />
-                        비용 +3.5%
+                        즉시 유동화
                       </Badge>
                     </div>
                   </Label>
@@ -116,14 +116,14 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-400" />
-              재무 영향 분석
+              손익 영향 분석 (억원)
             </h3>
             <Card className="bg-zinc-800/50 border-zinc-700 p-3">
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
                   <XAxis dataKey="name" stroke="#a1a1aa" style={{ fontSize: "12px" }} />
-                  <YAxis stroke="#a1a1aa" style={{ fontSize: "10px" }} tickFormatter={(value) => `${value / 1000}K`} />
+                  <YAxis stroke="#a1a1aa" style={{ fontSize: "10px" }} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "#18181b",
@@ -131,11 +131,11 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
                       borderRadius: "6px",
                       fontSize: "12px",
                     }}
-                    formatter={(value: number) => `₩${value.toLocaleString()}`}
+                    formatter={(value: number) => `${value}억원`}
                   />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Bar dataKey="비용" fill="#ef4444" />
-                  <Bar dataKey="매출" fill="#22c55e" />
+                  <Bar dataKey="손실" fill="#ef4444" name="예상 손실" />
+                  <Bar dataKey="회수예상" fill="#22c55e" name="회수 예상액" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -143,7 +143,7 @@ export function ScenarioPanel({ onExecute }: ScenarioPanelProps) {
 
           {/* 실행 버튼 */}
           <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleExecuteClick}>
-            선택한 옵션 실행
+            선택한 시나리오 실행
           </Button>
         </div>
       </div>
