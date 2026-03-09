@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -232,9 +233,9 @@ const VALIDATED_METHODOLOGIES: ValuationMethodology[] = [
   }
 ]
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════��═══════════════════════════════════════════════════════════
 // 온톨로지 기반 파라미터
-// ════════════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════���══════════════════
 
 interface OntologyParameter {
   id: string
@@ -347,7 +348,7 @@ function simulateCascadeDefault(companyRating: string, projectName: string): Cas
   const directImpact = nodes.filter(n => n.level === 1).reduce((sum, n) => sum + n.lossAmount, 0)
   const indirectImpact = nodes.filter(n => n.level >= 2).reduce((sum, n) => sum + n.lossAmount, 0)
   
-  // 연쇄부도 리스크 프리미엄 계산 (부도확률 * 전파율 * 손실율 기반)
+  // 연쇄부도 리스크 프리미엄 계산 (부도확률 * 전���율 * 손실율 기반)
   const avgTransmissionRate = links.reduce((sum, l) => sum + l.transmissionRate, 0) / links.length
   const cascadeRiskPremium = Math.min(5, pd * avgTransmissionRate * 100 * 2) // 최대 5%
   const expectedLoss = totalExposure * pd * avgTransmissionRate
