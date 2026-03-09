@@ -27,16 +27,15 @@ import { OntologyWizardDialog } from "./ontology-wizard-dialog"
 import { OntologyService, ObjectType, PropertyType, LinkType } from "@/lib/ontology-service"
 import { syncService, SyncStatus, SyncLog } from "@/lib/firebase-neo4j-sync-service"
 
-// ── 카테고리별 색상 매핑 ─────────────────────────────────────────
+// ── 대체투자 카테고리별 색상 매핑 ─────────────────────────────────────────
 const categoryColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  organization: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/30", label: "조직" },
-  process:       { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30", label: "공정" },
-  equipment:     { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/30", label: "설비" },
-  material:      { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/30", label: "자재" },
-  product:       { bg: "bg-green-500/10", text: "text-green-400", border: "border-green-500/30", label: "제품" },
-  supply_chain:  { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/30", label: "공급망" },
-  quality:       { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/30", label: "품질" },
-  finance:       { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/30", label: "재무" },
+  company:      { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/30", label: "회사" },
+  project:      { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30", label: "프로젝트" },
+  tranche:      { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/30", label: "트랜치" },
+  fund:         { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/30", label: "펀드" },
+  covenant:     { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/30", label: "약정" },
+  collateral:   { bg: "bg-green-500/10", text: "text-green-400", border: "border-green-500/30", label: "담보" },
+  credit_event: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/30", label: "신용이벤트" },
 }
 
 function getCategoryStyle(category?: string) {
@@ -96,7 +95,6 @@ export function OntologyConfigManager() {
   const handleNeo4jConnect = async () => {
     setIsConnecting(true)
     try {
-      // 항상 syncService를 통해 연결 (Firebase 실시간 동기화 포함)
       const result = await syncService.start({
         uri: neo4jConn.uri,
         user: neo4jConn.user,
@@ -165,7 +163,7 @@ export function OntologyConfigManager() {
   const handleMappingComplete = () => {
     toast({
       title: "AI 온톨로지 매핑 완료",
-      description: "드림텍 모듈 비즈니스 데이터가 Firebase에 구축되었습니다."
+      description: "대체투자 비즈니스 데이터가 Firebase에 구축되었습니다."
     })
     setCypherCode(OntologyService.generateCypher(objectTypes, linkTypes))
   }
@@ -191,7 +189,7 @@ export function OntologyConfigManager() {
               </Badge>
             </h2>
             <p className="text-sm text-zinc-400">
-              드림텍 비즈니스 객체·관계·속성을 정의하고 Neo4j 그래프 엔진과 실시간 동기화합니다
+              대체투자 비즈니스 객체·관계·속성을 정의하고 Neo4j 그래프 엔진과 실시간 동기화합니다
             </p>
           </div>
           <div className="flex gap-2">
@@ -279,7 +277,7 @@ export function OntologyConfigManager() {
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
                       <Label>객체 식별명</Label>
-                      <Input placeholder="예: Quality_Issue" className="bg-zinc-800 border-zinc-700" />
+                      <Input placeholder="예: PF_Project, Tranche" className="bg-zinc-800 border-zinc-700" />
                     </div>
                     <Button className="w-full bg-blue-600">저장하기</Button>
                   </div>
@@ -437,145 +435,112 @@ export function OntologyConfigManager() {
                   </div>
                 </div>
 
-                <Button
-                  className={`w-full text-sm ${isConnected ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
-                  onClick={handleNeo4jConnect}
-                  disabled={isConnecting}
-                >
-                  {isConnecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> :
-                    isConnected ? <Wifi className="w-4 h-4 mr-2" /> : <WifiOff className="w-4 h-4 mr-2" />}
-                  {isConnecting ? "연결 중..." : isConnected ? "연결됨" : "Neo4J 연결"}
-                </Button>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={handleNeo4jConnect}
+                    disabled={isConnecting}
+                    className={`flex-1 ${isConnected ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                  >
+                    {isConnecting ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : isConnected ? (
+                      <Wifi className="w-4 h-4 mr-2" />
+                    ) : (
+                      <WifiOff className="w-4 h-4 mr-2" />
+                    )}
+                    {isConnected ? "연결됨" : "연결 + 동기화 시작"}
+                  </Button>
+                </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full text-sm border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
-                  onClick={handleFullSync}
-                  disabled={!isConnected || isSyncing}
-                >
-                  {isSyncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                  Firebase → Neo4J 전체 동기화
-                </Button>
-
-                {syncStatus.lastSyncAt && (
-                  <div className="bg-zinc-950 rounded-lg p-3 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between text-zinc-400">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 마지막 동기화</span>
-                      <span className="text-zinc-500">{syncStatus.lastSyncAt.toLocaleTimeString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-zinc-500">상태</span>
-                      <Badge className={`text-[9px] ${
-                        syncStatus.lastSyncResult === "success" ? "bg-green-500/20 text-green-400" :
-                        syncStatus.lastSyncResult === "failed"  ? "bg-red-500/20 text-red-400" :
-                        "bg-yellow-500/20 text-yellow-400"
-                      }`}>
-                        {syncStatus.lastSyncResult === "success" ? "성공" :
-                          syncStatus.lastSyncResult === "failed" ? "실패" : "대기"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-zinc-500">
-                      <span>총 동기화 횟수</span>
-                      <span>{syncStatus.totalSyncs}회</span>
-                    </div>
-                  </div>
+                {isConnected && (
+                  <Button
+                    variant="outline"
+                    onClick={handleFullSync}
+                    disabled={isSyncing}
+                    className="w-full border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                  >
+                    {isSyncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                    전체 수동 동기화
+                  </Button>
                 )}
               </Card>
 
-              <Card className="lg:col-span-2 bg-black border-zinc-800 p-5 space-y-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500" />
+              <Card className="lg:col-span-2 bg-zinc-900 border-zinc-800 p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Terminal className="w-5 h-5 text-green-400" />
-                    <div>
-                      <h3 className="font-mono text-green-400 font-bold text-sm">Cypher Workflow</h3>
-                      <p className="text-[10px] text-zinc-500">Firebase 온톨로지 → Neo4J Cypher 자동 생성</p>
-                    </div>
-                  </div>
+                  <h3 className="font-bold flex items-center gap-2 text-sm">
+                    <Terminal className="w-4 h-4 text-green-400" />
+                    생성된 Cypher (스키마)
+                  </h3>
                   <Button
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white text-xs"
                     onClick={handleRunCypher}
-                    disabled={isExecuting || !isConnected}
+                    disabled={!isConnected || isExecuting}
+                    className="bg-green-600 hover:bg-green-700 text-xs"
                   >
-                    {isExecuting ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : <Zap className="w-3 h-3 mr-1.5" />}
-                    Cypher 실행
+                    {isExecuting ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Zap className="w-3 h-3 mr-1" />}
+                    Neo4J에 실행
                   </Button>
                 </div>
-                <div className="bg-zinc-950/80 rounded-lg border border-zinc-800 p-4">
-                  <ScrollArea className="h-[300px]">
-                    <pre className="text-emerald-500/90 font-mono text-[10px] leading-5 whitespace-pre-wrap">
-                      {cypherCode || "// AI 자동 매핑 후 Cypher 코드가 생성됩니다."}
-                    </pre>
-                  </ScrollArea>
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-zinc-600 italic">
-                  <span className="flex items-center gap-1">
-                    {isConnected
-                      ? <><Wifi className="w-3 h-3 text-green-500" /> READY TO SYNC</>
-                      : <><WifiOff className="w-3 h-3 text-red-500" /> DISCONNECTED</>
-                    }
-                  </span>
-                  <span>Neo4J Desktop 또는 Aura 인스턴스가 실행 중이어야 합니다</span>
-                </div>
+                <ScrollArea className="h-[300px] rounded border border-zinc-800">
+                  <pre className="p-3 text-xs font-mono text-green-400 whitespace-pre-wrap bg-black/50">
+                    {cypherCode || "// 객체/관계를 정의하면 자동으로 Cypher가 생성됩니다."}
+                  </pre>
+                </ScrollArea>
               </Card>
             </div>
           </TabsContent>
 
           {/* 동기화 로그 탭 */}
           <TabsContent value="sync" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h3 className="font-semibold flex items-center gap-2 text-sm">
-                  <Activity className="w-4 h-4 text-blue-400" />
-                  Firebase ↔ Neo4J 실시간 동기화 Agent
-                </h3>
-                <Badge className={`text-[10px] ${syncStatus.isRunning ? "bg-green-500/20 text-green-400" : "bg-zinc-800 text-zinc-500"}`}>
-                  {syncStatus.isRunning ? "실행 중" : "대기"}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <BarChart3 className="w-3.5 h-3.5" />
-                Objects: {syncStatus.objectCount} | Links: {syncStatus.linkCount} | Props: {syncStatus.propertyCount}
-              </div>
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              <Card className="bg-zinc-800/50 border-zinc-700/50 p-3 text-center">
+                <div className="text-xl font-bold text-green-400">{syncStatus.totalSyncs}</div>
+                <div className="text-[10px] text-zinc-500">총 동기화</div>
+              </Card>
+              <Card className="bg-zinc-800/50 border-zinc-700/50 p-3 text-center">
+                <div className="text-xl font-bold text-blue-400">{syncStatus.logs.filter(l => l.level === "success").length}</div>
+                <div className="text-[10px] text-zinc-500">성공</div>
+              </Card>
+              <Card className="bg-zinc-800/50 border-zinc-700/50 p-3 text-center">
+                <div className="text-xl font-bold text-red-400">{syncStatus.logs.filter(l => l.level === "error").length}</div>
+                <div className="text-[10px] text-zinc-500">오류</div>
+              </Card>
+              <Card className="bg-zinc-800/50 border-zinc-700/50 p-3 text-center">
+                <div className="text-xl font-bold text-zinc-400">
+                  {syncStatus.lastSyncAt ? new Date(syncStatus.lastSyncAt).toLocaleTimeString("ko-KR") : "-"}
+                </div>
+                <div className="text-[10px] text-zinc-500">마지막 동기화</div>
+              </Card>
             </div>
 
-            <ScrollArea className="h-[380px]">
-              <div className="space-y-1.5">
+            <Card className="bg-zinc-900 border-zinc-800 p-4">
+              <h3 className="font-bold flex items-center gap-2 text-sm mb-3">
+                <Activity className="w-4 h-4 text-blue-400" />
+                동기화 로그
+              </h3>
+              <ScrollArea className="h-[300px]">
                 {syncStatus.logs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-zinc-800 rounded-xl">
-                    <Activity className="w-8 h-8 text-zinc-700 mb-2" />
-                    <p className="text-zinc-500 text-sm">Neo4J에 연결하면 동기화 로그가 표시됩니다</p>
+                  <div className="flex flex-col items-center justify-center h-48 text-zinc-600">
+                    <Clock className="w-8 h-8 mb-2" />
+                    <p className="text-sm">아직 동기화 로그가 없습니다</p>
                   </div>
                 ) : (
-                  syncStatus.logs.map((log, idx) => (
-                    <div key={idx} className={`flex items-start gap-2 p-2 rounded-lg text-xs ${
-                      log.level === "success" ? "bg-green-500/5 border border-green-500/10" :
-                      log.level === "error"   ? "bg-red-500/5 border border-red-500/10" :
-                      log.level === "warning" ? "bg-yellow-500/5 border border-yellow-500/10" :
-                      "bg-zinc-900/50 border border-zinc-800/50"
-                    }`}>
-                      <LogIcon level={log.level} />
-                      <div className="flex-1 min-w-0">
-                        <span className={`${
-                          log.level === "success" ? "text-green-300" :
-                          log.level === "error"   ? "text-red-300" :
-                          log.level === "warning" ? "text-yellow-300" : "text-zinc-400"
-                        }`}>{log.message}</span>
-                        {log.details && (
-                          <pre className="text-zinc-600 text-[9px] mt-0.5 overflow-hidden truncate">
-                            {JSON.stringify(log.details).slice(0, 80)}
-                          </pre>
-                        )}
+                  <div className="space-y-2">
+                    {syncStatus.logs.slice().reverse().map((log, idx) => (
+                      <div key={idx} className="flex items-start gap-2 p-2 rounded bg-zinc-800/50 text-xs">
+                        <LogIcon level={log.level} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-zinc-300">{log.message}</div>
+                          <div className="text-[10px] text-zinc-600 mt-0.5">
+                            {new Date(log.timestamp).toLocaleString("ko-KR")}
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-zinc-700 text-[9px] flex-shrink-0">
-                        {log.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </div>
-            </ScrollArea>
+              </ScrollArea>
+            </Card>
           </TabsContent>
         </Tabs>
       </Card>
@@ -585,18 +550,9 @@ export function OntologyConfigManager() {
         onOpenChange={setShowAIMappingDialog}
         onComplete={handleMappingComplete}
       />
-
       <OntologyWizardDialog
         open={showWizardDialog}
         onOpenChange={setShowWizardDialog}
-        onComplete={() => {
-          setShowWizardDialog(false)
-          toast({
-            title: "위자드 설정 완료",
-            description: "온톨로지 객체·관계·속성이 Firebase에 저장되었습니다."
-          })
-          setCypherCode(OntologyService.generateCypher(objectTypes, linkTypes))
-        }}
       />
     </div>
   )

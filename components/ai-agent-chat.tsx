@@ -44,14 +44,14 @@ export function AIAgentChat() {
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 w-[380px] h-[600px] flex flex-col shadow-2xl border-zinc-700 bg-zinc-950/95 backdrop-blur z-50 overflow-hidden flex flex-col">
+    <Card className="fixed bottom-6 right-6 w-[380px] h-[600px] flex flex-col shadow-2xl border-zinc-700 bg-zinc-950/95 backdrop-blur z-50 overflow-hidden">
       <div className="bg-gradient-to-r from-purple-600/20 to-indigo-600/20 p-4 border-b border-zinc-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-purple-500/20 rounded-md">
             <Bot className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="font-bold text-sm">Palantir Ontology Agent</h3>
+            <h3 className="font-bold text-sm">이지자산평가 AI Agent</h3>
             <p className="text-[10px] text-zinc-400">Powered by Claude 3.5 Sonnet</p>
           </div>
         </div>
@@ -66,7 +66,7 @@ export function AIAgentChat() {
             <div className="text-center text-zinc-500 text-xs my-8 space-y-2">
               <Sparkles className="w-8 h-8 mx-auto text-zinc-600" />
               <p>무엇을 도와드릴까요?</p>
-              <p className="text-[10px]">예: "베트남 1공장의 현재 상태를 알려줘"</p>
+              <p className="text-[10px]">예: "송도 PF 프로젝트의 현재 가치평가 결과를 알려줘"</p>
             </div>
           )}
 
@@ -95,7 +95,7 @@ export function AIAgentChat() {
                     <div key={idx} className="mt-2 text-[10px] bg-black/50 p-2 rounded border border-purple-500/30 font-mono text-purple-300">
                       <div className="flex items-center gap-1 mb-1">
                         <Database className="w-3 h-3" />
-                        <span>Neo4j Graph Query Executing...</span>
+                        <span>Neo4j 자산 그래프 쿼리 실행 중...</span>
                       </div>
                       <div className="opacity-70 truncate">
                         {typeof part.input === 'object' && part.input !== null
@@ -128,7 +128,7 @@ export function AIAgentChat() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Neo4j 그래프에게 물어보세요..."
+            placeholder="대체투자 자산에 대해 물어보세요..."
             className="bg-black border-zinc-700 pr-10"
             disabled={isLoading}
           />

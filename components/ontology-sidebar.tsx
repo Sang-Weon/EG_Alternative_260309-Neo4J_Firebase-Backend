@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Network, Database, TrendingUp, Shield, FlaskConical, Briefcase } from "lucide-react"
+import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText } from "lucide-react"
 
 interface OntologySidebarProps {
   selectedMenu: string
@@ -10,12 +10,12 @@ interface OntologySidebarProps {
 }
 
 const menuItems = [
-  { id: "기업 Operation Dashboard", icon: LayoutDashboard, label: "기업 Operation Dashboard" },
-  { id: "온톨로지 뷰", icon: Network, label: "온톨로지 뷰" },
-  { id: "데이터 정제 기준정보 관리", icon: Database, label: "데이터 정제 기준정보 관리 (MDM)" },
-  { id: "수요 예측 및 최적대응", icon: TrendingUp, label: "수요 예측 및 최적대응 시나리오" },
-  { id: "품질관리 및 수율 최적화", icon: Shield, label: "품질관리 및 수율 최적화 조치" },
-  { id: "생산 최적화 시뮬레이션", icon: FlaskConical, label: "생산 최적화 시뮬레이션 엔진" },
+  { id: "포트폴리오 대시보드", icon: LayoutDashboard, label: "자산 포트폴리오 대시보드" },
+  { id: "온톨로지 뷰", icon: Network, label: "대체투자 온톨로지 뷰" },
+  { id: "가치평가 시뮬레이션", icon: Calculator, label: "가치평가 시뮬레이션" },
+  { id: "리스크/약정 모니터링", icon: AlertTriangle, label: "리스크 & 약정 모니터링" },
+  { id: "연쇄부도 시뮬레이션", icon: TrendingUp, label: "연쇄부도 시뮬레이션" },
+  { id: "투자 보고서", icon: FileText, label: "투자 분석 보고서" },
 ]
 
 export function OntologySidebar({ selectedMenu, onMenuSelect }: OntologySidebarProps) {
@@ -24,10 +24,10 @@ export function OntologySidebar({ selectedMenu, onMenuSelect }: OntologySidebarP
       {/* 헤더 */}
       <div className="p-4 border-b border-zinc-800">
         <div className="flex items-center gap-2 mb-2">
-          <Briefcase className="w-5 h-5 text-blue-400" />
-          <h2 className="font-semibold text-sm lg:text-base">프로젝트 컨텍스트</h2>
+          <Building2 className="w-5 h-5 text-emerald-400" />
+          <h2 className="font-semibold text-sm lg:text-base">이지자산평가</h2>
         </div>
-        <p className="text-xs lg:text-sm text-zinc-400 bg-zinc-800/50 rounded px-2 py-1">SEC 플래그십 출시</p>
+        <p className="text-xs lg:text-sm text-zinc-400 bg-zinc-800/50 rounded px-2 py-1">대체투자 자산 가치평가</p>
       </div>
 
       {/* 메뉴 항목 */}
@@ -42,7 +42,7 @@ export function OntologySidebar({ selectedMenu, onMenuSelect }: OntologySidebarP
                 key={item.id}
                 variant={isSelected ? "secondary" : "ghost"}
                 className={`w-full justify-start text-left ${
-                  isSelected ? "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30" : "text-zinc-300 hover:bg-zinc-800"
+                  isSelected ? "bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30" : "text-zinc-300 hover:bg-zinc-800"
                 }`}
                 onClick={() => onMenuSelect(item.id)}
               >

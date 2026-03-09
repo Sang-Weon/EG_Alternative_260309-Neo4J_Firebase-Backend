@@ -43,43 +43,43 @@ export function MDMDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const qualityMetrics: DataQualityMetric[] = [
-    { category: "고객 마스터", score: 94, status: "excellent", issues: 12 },
-    { category: "제품 마스터", score: 87, status: "good", issues: 28 },
-    { category: "공급업체 마스터", score: 76, status: "warning", issues: 45 },
-    { category: "공장/위치 마스터", score: 92, status: "excellent", issues: 8 },
-    { category: "자재 마스터", score: 68, status: "critical", issues: 67 },
+    { category: "펀드 마스터", score: 94, status: "excellent", issues: 12 },
+    { category: "회사 마스터", score: 87, status: "good", issues: 28 },
+    { category: "프로젝트 마스터", score: 76, status: "warning", issues: 45 },
+    { category: "트랜치 마스터", score: 92, status: "excellent", issues: 8 },
+    { category: "약정 마스터", score: 68, status: "critical", issues: 67 },
   ]
 
   const dataIssues: DataIssue[] = [
     {
       id: "DQ001",
       type: "duplicate",
-      entity: "자재 마스터",
-      description: "중복된 자재 코드 발견 (MAT-XYZ-991 / MAT-XYZ-991A)",
+      entity: "프로젝트 마스터",
+      description: "중복된 프로젝트 코드 발견 (PRJ-송도-001 / PRJ-송도-001A)",
       affectedRecords: 234,
       severity: "high",
     },
     {
       id: "DQ002",
       type: "inconsistent",
-      entity: "공급업체 마스터",
-      description: "공급업체 주소 정보 불일치 (ERP vs WMS)",
+      entity: "회사 마스터",
+      description: "회사 신용등급 정보 불일치 (내부평가 vs 외부평가)",
       affectedRecords: 45,
       severity: "medium",
     },
     {
       id: "DQ003",
       type: "missing",
-      entity: "제품 마스터",
-      description: "필수 항목 누락: 제품 카테고리 미입력",
+      entity: "트랜치 마스터",
+      description: "필수 항목 누락: 담보 정보 미입력",
       affectedRecords: 89,
       severity: "high",
     },
     {
       id: "DQ004",
       type: "invalid",
-      entity: "고객 마스터",
-      description: "유효하지 않은 이메일 형식",
+      entity: "펀드 마스터",
+      description: "유효하지 않은 약정 만기일 형식",
       affectedRecords: 23,
       severity: "low",
     },
@@ -164,9 +164,9 @@ export function MDMDashboard() {
           <div>
             <h2 className="text-xl lg:text-2xl font-bold flex items-center gap-2">
               <Database className="w-6 h-6 text-purple-400" />
-              마스터 데이터 관리 (MDM)
+              투자자산 마스터 데이터 관리
             </h2>
-            <p className="text-sm text-zinc-400 mt-1">데이터 품질 모니터링 및 정제</p>
+            <p className="text-sm text-zinc-400 mt-1">대체투자 자산 데이터 품질 모니터링 및 정제</p>
           </div>
           <Card className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-purple-500/50 p-4 lg:w-64">
             <div className="text-center">
@@ -324,14 +324,14 @@ export function MDMDashboard() {
                 <span className="text-sm font-semibold">중복 탐지</span>
                 <Badge className="bg-green-500/20 text-green-400">활성</Badge>
               </div>
-              <p className="text-xs text-zinc-400">동일한 자재 코드 자동 탐지 및 병합 제안</p>
+              <p className="text-xs text-zinc-400">동일한 프로젝트/펀드 코드 자동 탐지 및 병합 제안</p>
             </div>
             <div className="bg-zinc-800/50 border border-zinc-700 rounded p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold">데이터 검증</span>
                 <Badge className="bg-green-500/20 text-green-400">활성</Badge>
               </div>
-              <p className="text-xs text-zinc-400">필수 필드 검증 및 형식 확인</p>
+              <p className="text-xs text-zinc-400">필수 필드 검증 및 평가 기준 확인</p>
             </div>
             <div className="bg-zinc-800/50 border border-zinc-700 rounded p-4">
               <div className="flex items-center justify-between mb-2">

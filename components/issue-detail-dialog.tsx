@@ -28,34 +28,34 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
 
   // 이슈 영향도 데이터
   const impactData = [
-    { date: "1주전", 불량률: 0.3, 생산량: 100 },
-    { date: "6일전", 불량률: 0.35, 생산량: 98 },
-    { date: "5일전", 불량률: 0.42, 생산량: 95 },
-    { date: "4일전", 불량률: 0.58, 생산량: 92 },
-    { date: "3일전", 불량률: 0.65, 생산량: 88 },
-    { date: "2일전", 불량률: 0.72, 생산량: 85 },
-    { date: "어제", 불량률: 0.68, 생산량: 87 },
+    { date: "1주전", LTV: 62, DSCR: 1.45 },
+    { date: "6일전", LTV: 65, DSCR: 1.38 },
+    { date: "5일전", LTV: 68, DSCR: 1.30 },
+    { date: "4일전", LTV: 72, DSCR: 1.22 },
+    { date: "3일전", LTV: 75, DSCR: 1.15 },
+    { date: "2일전", LTV: 78, DSCR: 1.08 },
+    { date: "어제", LTV: 80, DSCR: 1.02 },
   ]
 
   // 근본 원인 분석
   const rootCauses = [
     {
-      category: "설비 이상",
+      category: "시공사 재무 악화",
       probability: 75,
-      description: "사출 성형기 #3의 온도 제어 시스템 오작동",
-      evidence: ["온도 로그에서 ±5°C 편차 감지", "성형 사이클 시간 15% 증가", "불량품 80%가 해당 설비에서 발생"],
+      description: "주력 시공사의 신용등급 하락 및 유동성 위기",
+      evidence: ["신용등급 A- → BBB+로 하락", "최근 3개월 영업현금흐름 적자 전환", "단기차입금 급증 (전년대비 45%)"],
     },
     {
-      category: "원자재 품질",
-      probability: 45,
-      description: "최근 입고된 폴리머 수지 배치의 점도 불균일",
-      evidence: ["입고 검사 데이터에서 점도 편차 확인", "동일 배치 사용 시 불량률 상승 패턴"],
+      category: "분양률 하락",
+      probability: 55,
+      description: "주변 경쟁 단지 공급 증가로 인한 분양 지연",
+      evidence: ["분양률 85% → 72%로 하락", "반경 2km 내 3개 경쟁 단지 분양 중", "계약 취소율 8% 발생"],
     },
     {
-      category: "작업 환경",
-      probability: 30,
-      description: "공장 내 습도 상승으로 인한 원료 흡습",
-      evidence: ["최근 1주일간 평균 습도 65% → 78%", "건조 시간 부족 가능성"],
+      category: "금리 인상",
+      probability: 40,
+      description: "기준금리 인상에 따른 이자 부담 증가",
+      evidence: ["대출금리 연 4.5% → 6.2%로 상승", "DSCR 산정 시 이자비용 38% 증가", "재융자 조건 악화"],
     },
   ]
 
@@ -63,53 +63,53 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
   const solutions = [
     {
       priority: "긴급",
-      title: "설비 #3 온도 제어 시스템 점검 및 교체",
-      impact: "불량률 70% 감소 예상",
-      cost: "2,500만원",
-      timeline: "2-3일",
+      title: "시공사 신용보강 및 책임준공 이행보증 강화",
+      impact: "LTV 10%p 개선 예상",
+      cost: "보증료 2억원",
+      timeline: "2주",
       steps: [
-        "설비 가동 중지 및 안전 점검",
-        "온도 센서 및 제어 모듈 진단",
-        "불량 부품 교체 (예상: PID 컨트롤러)",
-        "캘리브레이션 및 테스트 런",
+        "시공사 재무상태 정밀 실사",
+        "이행보증보험 증액 협의",
+        "대주단 협의체 소집",
+        "약정 조건 변경 협의",
       ],
       kpis: [
-        { metric: "불량률", current: "0.68%", target: "0.20%", improvement: "71%" },
-        { metric: "생산량", current: "87%", target: "100%", improvement: "15%" },
+        { metric: "LTV", current: "80%", target: "70%", improvement: "10%p" },
+        { metric: "신용위험", current: "높음", target: "중간", improvement: "1단계" },
       ],
     },
     {
       priority: "높음",
-      title: "원자재 배치 전수 검사 및 재고 관리 강화",
-      impact: "향후 유사 이슈 50% 예방",
-      cost: "800만원 (검사 장비)",
-      timeline: "1주일",
+      title: "분양 촉진 마케팅 및 가격 조정 전략",
+      impact: "분양률 15%p 개선 예상",
+      cost: "마케팅비 5억원",
+      timeline: "1개월",
       steps: [
-        "현재 재고 중 의심 배치 식별 및 격리",
-        "입고 검사 기준 강화 (점도, 수분 함량)",
-        "공급업체와 품질 기준 재협의",
-        "실시간 품질 모니터링 시스템 도입",
+        "시장 분석 및 경쟁력 평가",
+        "분양가 조정 시뮬레이션",
+        "마케팅 채널 다각화",
+        "계약금 납부 조건 완화 검토",
       ],
       kpis: [
-        { metric: "원자재 불량률", current: "2.3%", target: "0.5%", improvement: "78%" },
-        { metric: "공정 안정성", current: "85%", target: "95%", improvement: "12%" },
+        { metric: "분양률", current: "72%", target: "87%", improvement: "15%p" },
+        { metric: "DSCR", current: "1.02x", target: "1.25x", improvement: "0.23x" },
       ],
     },
     {
       priority: "중간",
-      title: "공장 환경 제어 시스템 개선",
-      impact: "장기적 품질 안정성 향상",
-      cost: "5,000만원",
-      timeline: "2주일",
+      title: "대출 구조 재조정 및 금리 헷지",
+      impact: "이자비용 연 8억원 절감",
+      cost: "헷지비용 3억원",
+      timeline: "3주",
       steps: [
-        "제습 시스템 용량 증설",
-        "원료 저장 구역 온습도 관리 강화",
-        "자동화된 환경 모니터링 구축",
-        "계절별 환경 관리 프로토콜 수립",
+        "금리 스왑 상품 검토",
+        "대출 만기 구조 조정 협의",
+        "추가 담보 제공 검토",
+        "리파이낸싱 옵션 분석",
       ],
       kpis: [
-        { metric: "습도 편차", current: "±15%", target: "±5%", improvement: "67%" },
-        { metric: "원료 품질 유지", current: "90%", target: "98%", improvement: "9%" },
+        { metric: "이자비용", current: "연 32억", target: "연 24억", improvement: "25%" },
+        { metric: "금리 변동성", current: "노출", target: "헷지", improvement: "리스크 차단" },
       ],
     },
   ]
@@ -126,7 +126,7 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-yellow-400" />
-              이슈 상세 분석
+              리스크 이슈 상세 분석
             </DialogTitle>
           </DialogHeader>
 
@@ -149,7 +149,7 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
                     <h3 className="text-lg font-semibold">{issue.title}</h3>
                   </div>
                   <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-400">
-                    진행중
+                    모니터링 중
                   </Badge>
                 </div>
 
@@ -157,8 +157,8 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
                   <div className="flex items-center gap-2">
                     <TrendingDown className="w-4 h-4 text-red-400" />
                     <div>
-                      <p className="text-xs text-zinc-400">생산 영향</p>
-                      <p className="text-sm font-semibold">-13% 감소</p>
+                      <p className="text-xs text-zinc-400">가치 영향</p>
+                      <p className="text-sm font-semibold">-18% 하락 위험</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
                     <Users className="w-4 h-4 text-blue-400" />
                     <div>
                       <p className="text-xs text-zinc-400">담당팀</p>
-                      <p className="text-sm font-semibold">생산관리팀</p>
+                      <p className="text-sm font-semibold">리스크관리팀</p>
                     </div>
                   </div>
                 </div>
@@ -182,19 +182,19 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
               <Card className="bg-zinc-800/50 border-zinc-700 p-4">
                 <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-blue-400" />
-                  불량률 및 생산량 추이
+                  LTV / DSCR 추이
                 </h3>
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={impactData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
                     <XAxis dataKey="date" stroke="#a1a1aa" style={{ fontSize: "11px" }} />
-                    <YAxis yAxisId="left" stroke="#ef4444" style={{ fontSize: "11px" }} />
-                    <YAxis yAxisId="right" orientation="right" stroke="#22c55e" style={{ fontSize: "11px" }} />
+                    <YAxis yAxisId="left" stroke="#ef4444" style={{ fontSize: "11px" }} domain={[50, 90]} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#22c55e" style={{ fontSize: "11px" }} domain={[0.8, 1.6]} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "#27272a", border: "1px solid #3f3f46", borderRadius: "6px" }}
                     />
-                    <Line yAxisId="left" type="monotone" dataKey="불량률" stroke="#ef4444" strokeWidth={2} />
-                    <Line yAxisId="right" type="monotone" dataKey="생산량" stroke="#22c55e" strokeWidth={2} />
+                    <Line yAxisId="left" type="monotone" dataKey="LTV" stroke="#ef4444" strokeWidth={2} name="LTV (%)" />
+                    <Line yAxisId="right" type="monotone" dataKey="DSCR" stroke="#22c55e" strokeWidth={2} name="DSCR (배)" />
                   </LineChart>
                 </ResponsiveContainer>
               </Card>
@@ -209,7 +209,7 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
                 <TabsContent value="diagnosis" className="space-y-3 mt-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-purple-400" />
-                    <p className="text-sm text-zinc-400">AI 기반 다차원 분석 결과</p>
+                    <p className="text-sm text-zinc-400">AI 기반 다차원 원인 분석 결과</p>
                   </div>
 
                   {rootCauses.map((cause, index) => (
@@ -244,7 +244,7 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
                 <TabsContent value="solutions" className="space-y-3 mt-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Lightbulb className="w-4 h-4 text-yellow-400" />
-                    <p className="text-sm text-zinc-400">우선순위별 실행 가능 방안</p>
+                    <p className="text-sm text-zinc-400">우선순위별 대응 방안</p>
                   </div>
 
                   {solutions.map((solution, index) => (
@@ -299,7 +299,7 @@ export function IssueDetailDialog({ isOpen, onClose, issue }: IssueDetailDialogP
 
                       {/* KPI 개선 예측 */}
                       <div className="bg-zinc-900 rounded p-3">
-                        <p className="text-xs font-semibold text-zinc-400 mb-2">예상 KPI 개선:</p>
+                        <p className="text-xs font-semibold text-zinc-400 mb-2">예상 지표 개선:</p>
                         <div className="space-y-2">
                           {solution.kpis.map((kpi, idx) => (
                             <div key={idx} className="flex items-center justify-between text-xs">

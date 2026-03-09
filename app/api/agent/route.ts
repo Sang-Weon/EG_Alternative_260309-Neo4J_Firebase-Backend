@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
     tools: {
       query_neo4j_graph: tool({
-        description: 'Execute a Cypher query against the Neo4j Ontology Database to fetch real-time operational or supply chain data.',
+        description: 'Execute a Cypher query against the Neo4j Ontology Database to fetch real-time alternative investment asset data including projects, tranches, covenants, and valuations.',
         inputSchema: z.object({
           cypher: z.string().describe('The strict Cypher query to execute. Example: MATCH (n:Factory) RETURN n'),
           explanation: z.string().describe('Brief explanation of what this query aims to find.')

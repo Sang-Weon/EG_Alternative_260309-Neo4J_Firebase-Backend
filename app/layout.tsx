@@ -24,8 +24,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "온톨로지 기반 제조기업 Operation 최적화 Agent",
-  description: "온톨로지 기반 제조기업 운영 최적화 시스템",
+  title: "이지자산평가 대체투자 가치평가 플랫폼",
+  description: "온톨로지 기반 대체투자 자산 가치평가 및 리스크 분석 시스템",
   generator: "v0.app",
   icons: {
     icon: [

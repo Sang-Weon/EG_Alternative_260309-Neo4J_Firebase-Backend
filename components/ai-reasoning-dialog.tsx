@@ -15,47 +15,48 @@ export function AIReasoningDialog({ open, onOpenChange }: AIReasoningDialogProps
     {
       step: 1,
       title: "온톨로지 객체 분석",
-      objects: ["SEC 주문 #2024-001", "배터리 팩", "베트남 공장"],
+      objects: ["송도 복합개발 PF", "선순위 트랜치 A", "한국건설 (시공사)"],
       description: "3개 핵심 객체의 관계와 속성을 분석했습니다.",
       confidence: 95,
-      ontologyContext: "주문-부품-공장 간 의존 관계를 온톨로지 그래프에서 추출",
+      ontologyContext: "프로젝트-트랜치-회사 간 의존 관계를 온톨로지 그래프에서 추출",
     },
     {
       step: 2,
-      title: "비즈니스 로직 실행",
+      title: "가치평가 로직 실행",
       rules: [
-        "납기 14일 이내 주문은 우선순위 High",
-        "배터리 팩 불량률 > 2% 시 경고",
-        "베트남 공장 가동률 < 85% 시 리스크",
+        "공정률 80% 이상 프로젝트는 DCF 모델 적용",
+        "LTV 70% 초과 시 리스크 경고",
+        "DSCR 1.2 미만 시 약정 위반 경고",
       ],
-      description: "온톨로지에 정의된 3개의 비즈니스 로직이 자동으로 적용되었습니다.",
+      description: "온톨로지에 정의된 3개의 평가 로직이 자동으로 적용되었습니다.",
       confidence: 88,
-      kineticNote: "객체에 결합된 함수가 자동 실행되어 실시간 검증 수행",
+      kineticNote: "객체에 결합된 함수가 자동 실행되어 실시간 가치평가 수행",
     },
     {
       step: 3,
-      title: "제약 조건 확인",
+      title: "리스크 제약 확인",
       constraints: [
-        "베트남 공장 배터리 팩 재고 부족 (현재 150개, 필요 500개)",
-        "대체 공급처: 천안 공장 (리드타임 +3일)",
+        "선순위 트랜치 LTV 68.5% (임계치 70% 근접)",
+        "시공사 신용등급 A- (안정적)",
+        "분양률 45% (목표 대비 -15%p)",
       ],
-      description: "온톨로지 관계를 통해 제약 조건을 탐색하고 대안을 식별했습니다.",
+      description: "온톨로지 관계를 통해 리스크 요인을 탐색하고 대안을 식별했습니다.",
       confidence: 92,
-      safetyNote: "온톨로지 가드레일로 환각 없이 실제 데이터 기반 추론",
+      safetyNote: "온톨로지 가드레일로 환각 없이 실제 투자 데이터 기반 추론",
     },
     {
       step: 4,
       title: "실행 가능 액션 생성",
-      actions: ["외주 긴급 발주 실행", "베트남 공장 생산 일정 조정", "천안 공장 백업 생산 준비"],
+      actions: ["담보 추가 확보 요청", "분양가 조정 검토", "시공사 지급보증 한도 증액"],
       description: "온톨로지에 정의된 액션 타입을 기반으로 실행 가능한 조치를 생성했습니다.",
       confidence: 90,
-      kineticNote: "각 액션은 SAP ERP에 Write-back 가능한 트랜잭션으로 변환됨",
+      kineticNote: "각 액션은 투자 심의 시스템에 Write-back 가능한 트랜잭션으로 변환됨",
     },
     {
       step: 5,
       title: "최종 권장사항",
-      recommendation: "옵션 B: 외주 긴급 발주 + 베트남 공장 병행 생산",
-      impact: "비용 +8.2% / 납기 -28.6% / 품질 +3.3%",
+      recommendation: "옵션 B: 담보 추가 확보 + 분양 마케팅 강화",
+      impact: "LTV -5.2%p / 분양률 +12%p 예상 / 리스크 등급 BBB+ → A-",
       confidence: 90,
       feedbackNote: "실행 결과는 온톨로지에 기록되어 향후 모델 학습에 활용됨",
     },
@@ -67,10 +68,10 @@ export function AIReasoningDialog({ open, onOpenChange }: AIReasoningDialogProps
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Brain className="w-6 h-6 text-purple-400" />
-            AI 추론 과정 투명성
+            AI 가치평가 추론 과정
           </DialogTitle>
           <DialogDescription className="text-zinc-400">
-            온톨로지 기반으로 AI가 어떻게 맥락을 이해하고 안전하게 의사결정을 내렸는지 확인할 수 있습니다.
+            온톨로지 기반으로 AI가 어떻게 대체투자 자산을 분석하고 의사결정을 내렸는지 확인할 수 있습니다.
           </DialogDescription>
         </DialogHeader>
 
@@ -78,10 +79,10 @@ export function AIReasoningDialog({ open, onOpenChange }: AIReasoningDialogProps
           <div className="flex items-start gap-3">
             <Network className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-blue-400 mb-1">온톨로지 기반 AI 작동 원리</h3>
+              <h3 className="text-sm font-semibold text-blue-400 mb-1">온톨로지 기반 AI 가치평가 원리</h3>
               <p className="text-xs text-zinc-300">
-                AI는 온톨로지를 통해 기업의 데이터 구조, 관계, 허용된 행동 범위를 이해합니다. 이는 AI가
-                환각(Hallucination) 없이 실제 데이터에 기반하여 추론하고 제안할 수 있게 하는 가드레일 역할을 합니다.
+                AI는 온톨로지를 통해 대체투자 자산의 구조, 관계, 허용된 평가 범위를 이해합니다. 이는 AI가
+                환각(Hallucination) 없이 실제 투자 데이터에 기반하여 추론하고 제안할 수 있게 하는 가드레일 역할을 합니다.
               </p>
             </div>
           </div>
@@ -124,7 +125,7 @@ export function AIReasoningDialog({ open, onOpenChange }: AIReasoningDialogProps
                 <div className="space-y-2 mb-3">
                   <div className="text-xs text-zinc-500 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    적용된 규칙:
+                    적용된 평가 규칙:
                   </div>
                   <ul className="space-y-1 text-xs">
                     {step.rules.map((rule, i) => (
@@ -141,7 +142,7 @@ export function AIReasoningDialog({ open, onOpenChange }: AIReasoningDialogProps
                 <div className="space-y-2 mb-3">
                   <div className="text-xs text-zinc-500 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    확인된 제약:
+                    확인된 리스크 요인:
                   </div>
                   <ul className="space-y-1 text-xs">
                     {step.constraints.map((constraint, i) => (

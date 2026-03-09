@@ -7,20 +7,43 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Bot, User, ChevronRight, CheckCircle2, Loader2, Sparkles,
-  Database, LinkIcon, Tag
+  Database, LinkIcon, Tag, Building2, Landmark, Shield, AlertTriangle,
+  TrendingUp, Layers, Users, FileText, ArrowRight, RotateCcw
 } from "lucide-react"
 import { OntologyService } from "@/lib/ontology-service"
 import { useToast } from "@/hooks/use-toast"
 
 // ────────────────────────────────────────────────────────────────────────────
-// 질문 흐름 데이터 정의
+// 분기형 질문 흐름 정의 - 대체투자 가치평가 관점
 // ────────────────────────────────────────────────────────────────────────────
-type StepId = "domain" | "org_name" | "org_structure" | "operations" | "supply_chain" | "kpis" | "review"
+type StepId = 
+  | "welcome" 
+  | "investor_type" 
+  | "asset_type" 
+  | "customer_type"
+  | "fund_structure"
+  | "collateral_type"
+  | "company_roles" 
+  | "tranche_structure" 
+  | "risk_metrics" 
+  | "covenants" 
+  | "valuation_method"
+  | "review"
+
 type SelectType = "single" | "multi" | "text"
 
-interface Option { value: string; label: string; desc?: string; icon?: string }
+interface Option { 
+  value: string
+  label: string
+  desc?: string
+  icon?: string
+  nextStep?: StepId // 분기 로직
+  condition?: (answers: Answers) => boolean // 조건부 표시
+}
+
 interface Step {
   id: StepId
   type: SelectType
@@ -28,710 +51,827 @@ interface Step {
   options?: Option[]
   placeholder?: string
   minSelect?: number
+  conditionalDisplay?: (answers: Answers) => boolean // 조건부 스텝 표시
 }
 
-const STEPS: Step[] = [
+const WIZARD_STEPS: Step[] = [
   {
-    id: "domain",
+    id: "welcome",
     type: "single",
     messages: [
-      "안녕하세요! 저는 온톨로지 구성을 도와드릴 AI 위자드입니다.",
-      "처음 설정이라도 괜찮아요. 몇 가지 질문에 답하시면 최적화된 객체·관계·속성을 자동으로 만들어 드릴게요.",
-      "먼저, 어떤 업종/비즈니스 도메인을 모델링하시겠어요?"
+      "안녕하세요! 이지자산평가 온톨로지 구성 위자드입니다.",
+      "몇 가지 질문에 답하시면 대체투자 자산평가에 최적화된 그래프 구조를 자동으로 생성해 드립니다.",
+      "시작하시겠습니까?"
     ],
     options: [
-      { value: "manufacturing", label: "제조업", desc: "공장·공정·부품·완제품 관리", icon: "🏭" },
-      { value: "logistics",     label: "유통/물류", desc: "창고·배송·공급망 관리", icon: "🚚" },
-      { value: "finance",       label: "금융/서비스", desc: "고객·상품·계약·리스크 관리", icon: "🏦" },
-      { value: "it",            label: "IT/소프트웨어", desc: "시스템·서비스·개발팀 관리", icon: "💻" },
-      { value: "healthcare",    label: "의료/바이오", desc: "환자·시설·의약품·임상 관리", icon: "🏥" },
+      { value: "start", label: "네, 시작합니다", icon: "rocket", nextStep: "investor_type" },
     ]
   },
   {
-    id: "org_name",
-    type: "text",
-    messages: ["좋아요! 그럼 회사 또는 사업부 이름을 입력해 주세요. 객체 이름에 사용됩니다."],
-    placeholder: "예: 드림텍, Dreamtech, ABC제조"
-  },
-  {
-    id: "org_structure",
-    type: "multi",
-    messages: ["조직 구조를 설정할게요. 해당하는 조직 단위를 모두 선택하세요. (복수 선택 가능)"],
-    minSelect: 1,
+    id: "investor_type",
+    type: "single",
+    messages: [
+      "먼저 투자 주체의 역할을 선택해 주세요.",
+      "GP(운용사)인지 LP(출자자)인지에 따라 관리해야 할 객체와 관계가 달라집니다."
+    ],
     options: [
-      { value: "hq",             label: "본사 (HQ)",       desc: "경영 전략 및 총괄 관리", icon: "🏢" },
-      { value: "domestic_plant", label: "국내 공장/사업장", desc: "국내 생산 또는 운영 거점", icon: "🏭" },
-      { value: "overseas_plant", label: "해외 공장/사업장", desc: "해외 생산 또는 운영 거점", icon: "🌏" },
-      { value: "rd_center",      label: "R&D 연구소",      desc: "신제품 개발 및 공정 혁신", icon: "🔬" },
-      { value: "sales_office",   label: "영업/마케팅 조직", desc: "영업 채널 및 고객 관리", icon: "📊" },
-      { value: "warehouse",      label: "물류창고/물류센터", desc: "재고 보관 및 출하 허브", icon: "📦" },
+      { value: "gp", label: "GP (운용사/자산운용)", desc: "펀드 운용, 투자 결정, 자산 관리 담당", icon: "building2", nextStep: "asset_type" },
+      { value: "lp", label: "LP (출자자/투자자)", desc: "펀드 출자, 수익 배분 수령", icon: "users", nextStep: "asset_type" },
+      { value: "advisor", label: "투자자문/평가기관", desc: "자산 평가, 실사, 자문 서비스", icon: "filetext", nextStep: "asset_type" },
     ]
   },
   {
-    id: "operations",
+    id: "asset_type",
     type: "multi",
     messages: [
-      "핵심 업무 활동이나 공정을 선택해 주세요.",
-      "선택하신 항목이 주요 Process 객체로 생성됩니다."
+      "어떤 대체자산 유형을 평가/관리하시나요?",
+      "선택하신 자산유형에 맞는 객체와 속성이 자동으로 구성됩니다. (복수 선택 가능)"
     ],
     minSelect: 1,
-    options: [] // 도메인별로 동적 생성
-  },
-  {
-    id: "supply_chain",
-    type: "multi",
-    messages: ["공급망 구성 요소를 선택하세요. 관련된 항목을 모두 골라주세요."],
     options: [
-      { value: "raw_material",      label: "핵심 부품/원자재",   desc: "생산에 투입되는 핵심 재료", icon: "⚙️" },
-      { value: "wip",               label: "반제품 (WIP)",       desc: "공정 중간 상태의 산출물", icon: "🔧" },
-      { value: "finished_product",  label: "완제품",             desc: "최종 판매 또는 납품 제품", icon: "📱" },
-      { value: "equipment",         label: "생산 설비/장비",     desc: "제조에 사용되는 기계나 시스템", icon: "🖥️" },
-      { value: "supplier",          label: "핵심 공급업체",      desc: "부품/서비스를 납품하는 외부사", icon: "🤝" },
-      { value: "customer",          label: "주요 고객사",        desc: "완제품을 수령하는 고객 기업", icon: "🏪" },
-      { value: "logistics_partner", label: "물류/운송 파트너",   desc: "배송·통관·창고 협력사", icon: "🚛" },
+      { value: "pf_development", label: "부동산 PF (개발형)", desc: "준공 전 개발 프로젝트 - 공정률/분양률 관리", icon: "construction" },
+      { value: "real_estate", label: "수익형 부동산", desc: "오피스/상업/물류/호텔 - NOI/Cap Rate 관리", icon: "building" },
+      { value: "infrastructure", label: "SOC 인프라", desc: "도로/항만/공항/에너지 - 사업권/수요 관리", icon: "road" },
+      { value: "aircraft", label: "항공기", desc: "여객기/화물기 리스 - 잔존가치/리스료 관리", icon: "plane" },
+      { value: "ship", label: "선박", desc: "컨테이너/벌크/탱커 - 용선료/잔존가치 관리", icon: "ship" },
+      { value: "renewable", label: "신재생에너지", desc: "태양광/풍력/ESS - 발전량/PPA 관리", icon: "sun" },
     ]
   },
   {
-    id: "kpis",
+    id: "customer_type",
+    type: "single",
+    messages: [
+      "주요 고객 유형을 선택해 주세요.",
+      "고객 유형에 따라 필요한 보고서 형식과 KPI가 달라집니다."
+    ],
+    options: [
+      { value: "institutional", label: "기관투자자", desc: "연기금/공제회/보험사/은행 등", icon: "landmark", nextStep: "fund_structure" },
+      { value: "corporate", label: "일반기업", desc: "건설사/시행사/운영사 등", icon: "building2", nextStep: "fund_structure" },
+      { value: "financial", label: "금융기관", desc: "증권사/자산운용사/캐피탈 등", icon: "banknotes", nextStep: "fund_structure" },
+      { value: "public", label: "공공기관", desc: "정부/지자체/공기업 등", icon: "shield", nextStep: "fund_structure" },
+    ]
+  },
+  {
+    id: "fund_structure",
+    type: "single",
+    messages: [
+      "투자 구조(펀드 형태)를 선택해 주세요.",
+      "구조에 따라 트랜치 및 수익 배분 로직이 달라집니다."
+    ],
+    options: [
+      { value: "blind_pool", label: "블라인드 펀드", desc: "투자 대상 미확정 - 포트폴리오 구성 예정", icon: "layers", nextStep: "collateral_type" },
+      { value: "project_fund", label: "프로젝트 펀드", desc: "특정 프로젝트 대상 - 단일 자산 투자", icon: "target", nextStep: "collateral_type" },
+      { value: "club_deal", label: "클럽딜", desc: "복수 투자자 공동 투자 - 지분 구조", icon: "users", nextStep: "collateral_type" },
+      { value: "direct", label: "직접 투자", desc: "펀드 없이 직접 자산 취득/관리", icon: "arrowright", nextStep: "collateral_type" },
+    ]
+  },
+  {
+    id: "collateral_type",
     type: "multi",
     messages: [
-      "마지막으로, 어떤 지표(KPI)를 주로 관리하시나요?",
-      "선택하신 KPI가 속성(Property)으로 자동 생성되어 각 객체에 연결됩니다."
+      "담보 유형을 선택해 주세요.",
+      "담보 유형에 따라 LTV 계산 방식과 평가 기준이 달라집니다."
     ],
     minSelect: 1,
     options: [
-      { value: "utilization",   label: "가동율 (Utilization)",       desc: "설비·라인 가동 비율 (%)", icon: "⚡" },
-      { value: "yield_rate",    label: "수율 (Yield Rate)",          desc: "양품 비율 (%)", icon: "✅" },
-      { value: "defect_rate",   label: "불량율 (Defect Rate)",       desc: "불량품 비율 (%)", icon: "❌" },
-      { value: "lead_time",     label: "리드타임 (Lead Time)",       desc: "납기·공정 소요 기간 (일)", icon: "⏱️" },
-      { value: "stock_level",   label: "재고수위 (Stock Level)",     desc: "보유 재고 수량 (pcs)", icon: "📦" },
-      { value: "unit_price",    label: "단가/원가 (Unit Price/Cost)", desc: "부품 단가 또는 제조원가 (원)", icon: "💰" },
-      { value: "oee",           label: "OEE (설비종합효율)",         desc: "가용성×성능×품질 종합 지표 (%)", icon: "📈" },
-      { value: "delivery_rate", label: "납기준수율 (On-time Delivery)", desc: "약속 납기 이내 납품 비율 (%)", icon: "🎯" },
-      { value: "throughput",    label: "처리량 (Throughput)",        desc: "단위시간당 생산·처리량 (pcs/hr)", icon: "🔄" },
-      { value: "cost",          label: "비용/매출 (Cost/Revenue)",   desc: "운영 비용 또는 매출 금액 (억 원)", icon: "💹" },
+      { value: "real_property", label: "부동산 담보", desc: "토지/건물/수익권 등", icon: "home" },
+      { value: "movable", label: "동산 담보", desc: "기계/장비/항공기/선박 등", icon: "truck" },
+      { value: "receivables", label: "채권 담보", desc: "매출채권/리스채권/PPA 수익 등", icon: "receipt" },
+      { value: "equity", label: "지분 담보", desc: "SPC 지분/펀드 지분 등", icon: "piechart" },
+      { value: "guarantee", label: "보증/신용보강", desc: "책임준공/연대보증/신용보험 등", icon: "shield" },
+      { value: "none", label: "무담보", desc: "담보 없이 신용 기반 투자", icon: "alert" },
+    ]
+  },
+  {
+    id: "company_roles",
+    type: "multi",
+    messages: [
+      "투자 구조에 관여하는 회사 역할을 선택하세요.",
+      "각 역할이 그래프 노드로 생성되고, 프로젝트와 연결됩니다."
+    ],
+    minSelect: 1,
+    options: [
+      { value: "constructor", label: "시공사", desc: "건설 공사 실행 및 책임준공 담당", icon: "hammer" },
+      { value: "developer", label: "시행사", desc: "부동산 개발 사업 기획 및 추진", icon: "pencil" },
+      { value: "operator", label: "운영사/AM", desc: "자산 운영 및 관리 담당", icon: "settings" },
+      { value: "trustee", label: "수탁사/신탁사", desc: "자금 관리 및 신탁 업무", icon: "vault" },
+      { value: "guarantor", label: "보증기관", desc: "신용보강 및 보증 제공", icon: "shield" },
+      { value: "lender", label: "대주단/금융기관", desc: "대출 제공 금융기관", icon: "bank" },
+      { value: "appraiser", label: "감정평가사", desc: "담보 및 자산 가치 평가", icon: "search" },
+    ]
+  },
+  {
+    id: "tranche_structure",
+    type: "multi",
+    messages: [
+      "투자 구조의 트랜치 구성을 선택하세요.",
+      "선택하신 항목이 트랜치 노드로 생성되고 상환 우선순위가 설정됩니다."
+    ],
+    minSelect: 1,
+    options: [
+      { value: "senior", label: "선순위 (Senior)", desc: "우선 상환, 낮은 리스크, 낮은 수익률", icon: "1" },
+      { value: "mezzanine", label: "중순위 (Mezzanine)", desc: "중간 위험/수익, 후순위 대출 또는 우선주", icon: "2" },
+      { value: "junior", label: "후순위 (Junior)", desc: "높은 위험/수익, 선순위 상환 후 회수", icon: "3" },
+      { value: "equity", label: "지분 (Equity)", desc: "자본금/출자금, 최종 배당", icon: "star" },
+    ]
+  },
+  {
+    id: "risk_metrics",
+    type: "multi",
+    messages: [
+      "주로 관리할 리스크 지표(KPI)를 선택하세요.",
+      "선택하신 지표가 프로젝트 속성으로 자동 생성됩니다."
+    ],
+    minSelect: 1,
+    options: [
+      { value: "ltv", label: "LTV (담보인정비율)", desc: "대출금액 / 담보가치 (%)", icon: "percent" },
+      { value: "dscr", label: "DSCR (원리금상환비율)", desc: "영업이익 / 원리금 (배수)", icon: "calculator" },
+      { value: "icr", label: "ICR (이자보상비율)", desc: "영업이익 / 이자비용 (배수)", icon: "trending" },
+      { value: "irr", label: "IRR (내부수익률)", desc: "투자 수익률 (%)", icon: "target" },
+      { value: "npv", label: "NPV (순현재가치)", desc: "현금흐름 현재가치 (억원)", icon: "coins" },
+      { value: "cap_rate", label: "Cap Rate (자본환원율)", desc: "NOI / 자산가치 (%)", icon: "home" },
+      { value: "noi", label: "NOI (순영업이익)", desc: "임대수익 - 운영비용 (억원)", icon: "receipt" },
+      { value: "pd", label: "PD (부도확률)", desc: "차주 부도 확률 (%)", icon: "alert" },
+    ]
+  },
+  {
+    id: "covenants",
+    type: "multi",
+    messages: [
+      "관리할 재무 약정(Covenant) 유형을 선택하세요.",
+      "약정 위반 시 조기경보 알림이 발생합니다."
+    ],
+    options: [
+      { value: "ltv_covenant", label: "LTV 약정", desc: "담보인정비율 유지 의무 (예: 70% 이하)", icon: "percent" },
+      { value: "dscr_covenant", label: "DSCR 약정", desc: "원리금상환비율 유지 의무 (예: 1.2x 이상)", icon: "calculator" },
+      { value: "completion", label: "공정률 약정", desc: "공사 진행률 달성 의무", icon: "construction" },
+      { value: "presale", label: "분양률 약정", desc: "분양 목표 달성 의무", icon: "home" },
+      { value: "occupancy", label: "임대율 약정", desc: "임대 목표 달성 의무", icon: "key" },
+      { value: "cash_trap", label: "Cash Trap", desc: "현금 유보 조건 트���거", icon: "lock" },
+      { value: "rating", label: "신용등급 유지", desc: "차주/보증인 신용등급 유지 의무", icon: "star" },
+    ]
+  },
+  {
+    id: "valuation_method",
+    type: "multi",
+    messages: [
+      "사용할 가치평가 방법론을 선택하세요.",
+      "선택하신 방법론이 시뮬레이션에서 사용 가능하도록 설정됩니다."
+    ],
+    options: [
+      { value: "dcf", label: "DCF (할인현금흐름)", desc: "미래 현금흐름 현재가치화", icon: "trending" },
+      { value: "npv", label: "NPV (순현재가치)", desc: "투자 대비 순수익 현재가치", icon: "coins" },
+      { value: "irr", label: "IRR (내부수익률)", desc: "NPV=0이 되는 할인율", icon: "target" },
+      { value: "cap_rate", label: "Cap Rate (자본환원율)", desc: "NOI 기반 자산가치 산정", icon: "home" },
+      { value: "replacement", label: "대체원가법", desc: "동일자산 재취득 비용 기준", icon: "refresh" },
+      { value: "residual", label: "잔여법 (개발형)", desc: "완공가치 - 사업비 = 토지가치", icon: "layers" },
     ]
   },
   {
     id: "review",
     type: "single",
-    messages: ["완벽해요! 아래 내용으로 온톨로지를 구성할게요. 확인 후 '생성 시작'을 누르세요."],
+    messages: ["완벽해요! 아래 내용으로 대체투자 온톨로지를 구성할게요. 확인 후 '생성 시작'을 누르세요."],
     options: [
-      { value: "confirm", label: "생성 시작", icon: "🚀" },
-      { value: "restart", label: "처음부터 다시", icon: "🔄" },
+      { value: "confirm", label: "생성 시작", icon: "rocket" },
+      { value: "restart", label: "처음부터 다시", icon: "refresh" },
     ]
   }
 ]
 
-// 도메인별 Operations 옵션
-const DOMAIN_OPERATIONS: Record<string, Option[]> = {
-  manufacturing: [
-    { value: "smt",       label: "SMT / PCB 공정",     desc: "표면실장 및 기판 제조", icon: "🔩" },
-    { value: "assembly",  label: "모듈 조립",           desc: "부품 결합 및 완성", icon: "🔧" },
-    { value: "inspection",label: "품질검사 / AOI",       desc: "광학·전기적 검사", icon: "🔍" },
-    { value: "test",      label: "기능 테스트",          desc: "최종 기능 및 성능 검증", icon: "📋" },
-    { value: "machining", label: "기계 가공",           desc: "절삭·성형·열처리", icon: "⚙️" },
-    { value: "packaging", label: "포장 / 출하",         desc: "완제품 포장 및 물류 출하", icon: "📤" },
-  ],
-  logistics: [
-    { value: "inbound",    label: "입고 / 검수",        desc: "화물 수령 및 품질 확인", icon: "📥" },
-    { value: "storage",    label: "창고 관리",          desc: "재고 입출고 및 위치 관리", icon: "🏪" },
-    { value: "picking",    label: "피킹 / 분류",        desc: "주문별 상품 수집 및 분류", icon: "🗂️" },
-    { value: "delivery",   label: "배송 / 운송",        desc: "차량 배정 및 배송 실행", icon: "🚛" },
-    { value: "customs",    label: "통관 / 수출입",      desc: "세관 처리 및 서류 관리", icon: "📄" },
-  ],
-  finance: [
-    { value: "account_mgmt", label: "고객 계좌 관리",  desc: "계좌 개설·유지·해지", icon: "👤" },
-    { value: "lending",      label: "여신 / 대출",     desc: "심사·실행·관리", icon: "💳" },
-    { value: "investment",   label: "투자 / 운용",     desc: "포트폴리오 관리", icon: "📊" },
-    { value: "settlement",   label: "결제 / 정산",     desc: "거래 처리 및 정산", icon: "💱" },
-    { value: "compliance",   label: "컴플라이언스",     desc: "규제 준수 및 감사", icon: "⚖️" },
-  ],
-  it: [
-    { value: "development",  label: "소프트웨어 개발", desc: "기능 설계·개발·배포", icon: "👨‍💻" },
-    { value: "qa",           label: "QA / 테스트",    desc: "품질 검증 및 버그 관리", icon: "🧪" },
-    { value: "infra",        label: "인프라 / DevOps", desc: "서버·클라우드 운영", icon: "☁️" },
-    { value: "data",         label: "데이터 분석",     desc: "데이터 수집·분석·모델링", icon: "📉" },
-    { value: "support",      label: "고객 지원",      desc: "이슈 접수 및 해결", icon: "🎧" },
-  ],
-  healthcare: [
-    { value: "diagnosis",    label: "진단 / 검사",     desc: "환자 진단 및 검사 시행", icon: "🩺" },
-    { value: "treatment",    label: "치료 / 시술",     desc: "치료 계획 및 시행", icon: "💊" },
-    { value: "clinical",     label: "임상 연구",       desc: "신약·의료기기 임상 시험", icon: "🔬" },
-    { value: "pharmacy",     label: "약품 관리",       desc: "의약품 처방·조제·유통", icon: "💉" },
-    { value: "insurance",    label: "보험 / 수납",     desc: "의료비 청구 및 수납 처리", icon: "📑" },
-  ],
-}
-
 // ────────────────────────────────────────────────────────────────────────────
-// 온톨로지 생성 엔진 (answers → objects/links/props)
+// 온톨로지 생성 엔진
 // ────────────────────────────────────────────────────────────────────────────
 type Answers = Record<StepId, string | string[]>
 
-function buildOntology(answers: Answers) {
-  const domain   = (answers.domain   as string) || "manufacturing"
-  const orgName  = ((answers.org_name as string) || "MyCompany").replace(/\s/g, "_")
-  const orgStr   = (answers.org_structure as string[]) || []
-  const ops      = (answers.operations   as string[]) || []
-  const scItems  = (answers.supply_chain as string[]) || []
-  const kpis     = (answers.kpis         as string[]) || []
+function buildOntologyFromAnswers(answers: Answers) {
+  const investorType = (answers.investor_type as string) || "gp"
+  const assetTypes = (answers.asset_type as string[]) || []
+  const customerType = (answers.customer_type as string) || "institutional"
+  const fundStructure = (answers.fund_structure as string) || "project_fund"
+  const collateralTypes = (answers.collateral_type as string[]) || []
+  const companyRoles = (answers.company_roles as string[]) || []
+  const tranches = (answers.tranche_structure as string[]) || []
+  const riskMetrics = (answers.risk_metrics as string[]) || []
+  const covenants = (answers.covenants as string[]) || []
+  const valuationMethods = (answers.valuation_method as string[]) || []
 
   const objects: any[] = []
-  const links: any[]   = []
-  const props: any[]   = []
+  const links: any[] = []
+  const props: any[] = []
 
-  // ── 1. 조직 객체 ──────────────────────────────────────────────
-  if (orgStr.includes("hq")) {
+  // ── 1. 투자자/펀드 객체 ──────────────────────────────────────────────
+  const investorLabel = investorType === "gp" ? "AssetManager" : investorType === "lp" ? "Investor" : "Advisor"
+  objects.push({
+    name: investorLabel,
+    description: `${investorType.toUpperCase()} - ${investorType === "gp" ? "자산운용사/GP" : investorType === "lp" ? "출자자/LP" : "투자자문사"}`,
+    category: "investor",
+    source: "ai-mapped",
+    properties: [
+      { id: "inv_name", name: "Name", type: "string", required: true },
+      { id: "inv_aum", name: "AUM_B", type: "number", required: true },
+      { id: "inv_type", name: "Investor_Type", type: "string", required: true },
+    ],
+    metadata: { neo4j_label: investorLabel, investor_type: investorType }
+  })
+
+  // 펀드 객체 (직접투자가 아닌 경우)
+  if (fundStructure !== "direct") {
     objects.push({
-      name: `${orgName}_HQ`, description: `${orgName} 본사 - 경영 전략 및 전사 운영 총괄`,
-      category: "organization", source: "ai-mapped",
-      properties: [{ id: "h1", name: "Location", type: "string", required: true }],
-      metadata: { neo4j_label: "HQ" }
+      name: "Fund",
+      description: `${fundStructure === "blind_pool" ? "블라인드 펀드" : fundStructure === "club_deal" ? "클럽딜 펀드" : "프로젝트 펀드"}`,
+      category: "fund",
+      source: "ai-mapped",
+      properties: [
+        { id: "fund_name", name: "Name", type: "string", required: true },
+        { id: "fund_aum", name: "AUM_B", type: "number", required: true },
+        { id: "fund_vintage", name: "Vintage_Year", type: "number", required: true },
+        { id: "fund_target", name: "Target_Return", type: "number", required: false },
+      ],
+      metadata: { neo4j_label: "Fund", structure: fundStructure }
     })
-  }
-  if (orgStr.includes("domestic_plant")) {
-    objects.push({
-      name: "Domestic_Plant", description: "국내 생산/운영 거점",
-      category: "organization", source: "ai-mapped",
-      properties: [{ id: "dp1", name: "Location", type: "string", required: true }, { id: "dp2", name: "Monthly_Capacity_K", type: "number", required: false }],
-      metadata: { neo4j_label: "Factory" }
-    })
-    if (orgStr.includes("hq")) links.push({ name: "MANAGES", fromType: `${orgName}_HQ`, toType: "Domestic_Plant", bidirectional: false, description: "본사 → 국내 공장 관리" })
-  }
-  if (orgStr.includes("overseas_plant")) {
-    objects.push({
-      name: "Overseas_Plant", description: "해외 생산/운영 거점",
-      category: "organization", source: "ai-mapped",
-      properties: [{ id: "op1", name: "Region", type: "string", required: true }, { id: "op2", name: "Monthly_Capacity_K", type: "number", required: false }],
-      metadata: { neo4j_label: "Factory" }
-    })
-    if (orgStr.includes("hq")) links.push({ name: "MANAGES", fromType: `${orgName}_HQ`, toType: "Overseas_Plant", bidirectional: false, description: "본사 → 해외 공장 관리" })
-  }
-  if (orgStr.includes("rd_center")) {
-    objects.push({
-      name: "RD_Center", description: "R&D 연구소 - 신제품 개발 및 공정 혁신",
-      category: "organization", source: "ai-mapped",
-      properties: [{ id: "rd1", name: "Active_Projects", type: "number", required: false }],
-      metadata: { neo4j_label: "RDCenter" }
-    })
-    if (orgStr.includes("hq")) links.push({ name: "MANAGES", fromType: `${orgName}_HQ`, toType: "RD_Center", bidirectional: false, description: "본사 → R&D 관리" })
-  }
-  if (orgStr.includes("warehouse")) {
-    objects.push({
-      name: "Warehouse", description: "물류창고/물류센터 - 재고 관리 및 출하",
-      category: "organization", source: "ai-mapped",
-      properties: [{ id: "wh1", name: "Capacity", type: "number", required: false }, { id: "wh2", name: "Utilization", type: "number", required: false }],
-      metadata: { neo4j_label: "Warehouse" }
-    })
+    links.push({ name: "MANAGES", fromType: investorLabel, toType: "Fund", bidirectional: false, neo4jType: "MANAGES", description: `${investorLabel}가 펀드 운용` })
   }
 
-  // ── 2. 프로세스 객체 ──────────────────────────────────────────
-  const processObjMap: Record<string, any> = {
-    smt:        { name: "SMT_Line",      description: "표면실장 공정 - 솔더 페이스트→마운팅→리플로우", category: "process", neo4j_label: "Line" },
-    assembly:   { name: "Assembly_Line", description: "모듈 조립 공정 - 부품 결합 및 완성", category: "process", neo4j_label: "Line" },
-    inspection: { name: "QC_Inspection", description: "품질 검사 공정 - AOI·전기적 특성 검사", category: "process", neo4j_label: "Line" },
-    test:       { name: "Test_Line",     description: "기능 테스트 공정 - 최종 기능·성능 검증", category: "process", neo4j_label: "Line" },
-    machining:  { name: "Machining_Line", description: "기계 가공 공정 - 절삭·성형·열처리", category: "process", neo4j_label: "Line" },
-    packaging:  { name: "Packaging_Line", description: "포장/출하 공정 - 포장 및 물류 출하", category: "process", neo4j_label: "Line" },
-    inbound:    { name: "Inbound_Process", description: "입고/검수 프로세스", category: "process", neo4j_label: "Process" },
-    storage:    { name: "Storage_Process", description: "창고 관리 프로세스", category: "process", neo4j_label: "Process" },
-    picking:    { name: "Picking_Process", description: "피킹/분류 프로세스", category: "process", neo4j_label: "Process" },
-    delivery:   { name: "Delivery_Process", description: "배송/운송 프로세스", category: "process", neo4j_label: "Process" },
-    customs:    { name: "Customs_Process", description: "통관/수출입 프로세스", category: "process", neo4j_label: "Process" },
-    development:{ name: "Dev_Process",   description: "소프트웨어 개발 프로세스", category: "process", neo4j_label: "Process" },
-    qa:         { name: "QA_Process",    description: "QA/테스트 프로세스", category: "process", neo4j_label: "Process" },
-    infra:      { name: "Infra_Process", description: "인프라/DevOps 프로세스", category: "process", neo4j_label: "Process" },
-    data:       { name: "Data_Process",  description: "데이터 분석 프로세스", category: "process", neo4j_label: "Process" },
-    support:    { name: "Support_Process", description: "고객 지원 프로세스", category: "process", neo4j_label: "Process" },
-    diagnosis:  { name: "Diagnosis_Process", description: "진단/검사 프로세스", category: "process", neo4j_label: "Process" },
-    treatment:  { name: "Treatment_Process", description: "치료/시술 프로세스", category: "process", neo4j_label: "Process" },
-    account_mgmt:{ name: "Account_Management", description: "고객 계좌 관리 프로세스", category: "process", neo4j_label: "Process" },
-    lending:    { name: "Lending_Process", description: "여신/대출 프로세스", category: "process", neo4j_label: "Process" },
+  // ── 2. 프로젝트 객체 (자산유형별) ──────────────────────────────────────────
+  const projectMap: Record<string, any> = {
+    pf_development: { name: "PF_Project", description: "부동산 PF 개발 사업", neo4j_label: "Project", asset_type: "PF_DEVELOPMENT" },
+    real_estate: { name: "Real_Estate", description: "수익형 부동산 자산", neo4j_label: "Project", asset_type: "REAL_ESTATE" },
+    infrastructure: { name: "Infrastructure", description: "SOC 인프라 자산", neo4j_label: "Project", asset_type: "INFRASTRUCTURE" },
+    aircraft: { name: "Aircraft", description: "항공기 리스 자산", neo4j_label: "Project", asset_type: "AIRCRAFT" },
+    ship: { name: "Ship", description: "선박 리스 자산", neo4j_label: "Project", asset_type: "SHIP" },
+    renewable: { name: "Renewable_Energy", description: "신재생에너지 자산", neo4j_label: "Project", asset_type: "RENEWABLE_ENERGY" },
   }
 
-  const processNames: string[] = []
-  const plantName = orgStr.includes("domestic_plant") ? "Domestic_Plant" : (orgStr.includes("overseas_plant") ? "Overseas_Plant" : null)
+  const projectNames: string[] = []
+  assetTypes.forEach(type => {
+    const template = projectMap[type]
+    if (!template) return
+    
+    // 자산유형별 특화 속성 추가
+    const assetSpecificProps: any[] = [
+      { id: `${type}_name`, name: "Name", type: "string", required: true },
+      { id: `${type}_value`, name: "Current_Value_B", type: "number", required: true },
+      { id: `${type}_status`, name: "Status", type: "string", required: true },
+    ]
+    
+    // PF 개발형 특화 속성
+    if (type === "pf_development") {
+      assetSpecificProps.push(
+        { id: `${type}_completion`, name: "Completion_Rate", type: "number", required: true },
+        { id: `${type}_presale`, name: "Presale_Rate", type: "number", required: false },
+        { id: `${type}_gdv`, name: "GDV_B", type: "number", required: true }
+      )
+    }
+    
+    // 수익형 부동산 특화 속성
+    if (type === "real_estate") {
+      assetSpecificProps.push(
+        { id: `${type}_noi`, name: "NOI_B", type: "number", required: true },
+        { id: `${type}_cap_rate`, name: "Cap_Rate", type: "number", required: true },
+        { id: `${type}_occupancy`, name: "Occupancy_Rate", type: "number", required: true }
+      )
+    }
+    
+    // 항공기/선박 특화 속성
+    if (type === "aircraft" || type === "ship") {
+      assetSpecificProps.push(
+        { id: `${type}_residual`, name: "Residual_Value_B", type: "number", required: true },
+        { id: `${type}_lease_rate`, name: "Lease_Rate", type: "number", required: true },
+        { id: `${type}_age`, name: "Asset_Age", type: "number", required: true }
+      )
+    }
+    
+    // 신재생에너지 특화 속성
+    if (type === "renewable") {
+      assetSpecificProps.push(
+        { id: `${type}_capacity`, name: "Capacity_MW", type: "number", required: true },
+        { id: `${type}_ppa_price`, name: "PPA_Price", type: "number", required: true },
+        { id: `${type}_cf`, name: "Capacity_Factor", type: "number", required: true }
+      )
+    }
 
-  ops.forEach(op => {
-    const template = processObjMap[op]
+    objects.push({
+      name: template.name,
+      description: template.description,
+      category: "project",
+      source: "ai-mapped",
+      properties: assetSpecificProps,
+      metadata: { neo4j_label: template.neo4j_label, asset_type: template.asset_type }
+    })
+    projectNames.push(template.name)
+
+    // 펀드-프로젝트 관계
+    if (fundStructure !== "direct") {
+      links.push({ name: "INVESTS_IN", fromType: "Fund", toType: template.name, bidirectional: false, neo4jType: "INVESTS_IN", description: `펀드의 ${template.name} 투자` })
+    } else {
+      links.push({ name: "OWNS", fromType: investorLabel, toType: template.name, bidirectional: false, neo4jType: "OWNS", description: `${investorLabel}의 ${template.name} 직접 보유` })
+    }
+  })
+
+  // ── 3. 회사 객체 ──────────────────────────────────────────────
+  const companyMap: Record<string, any> = {
+    constructor: { name: "Constructor", description: "시공사 - 건설 공사 실행 및 책임준공 담당", role: "시공사" },
+    developer: { name: "Developer", description: "시행사 - 부동산 개발 사업 기획 및 추진", role: "시행사" },
+    operator: { name: "Operator", description: "운영사 - 자산 운영 및 관리 담당", role: "운영사" },
+    trustee: { name: "Trustee", description: "수탁사 - 자금 관리 및 신탁 업무", role: "수탁사" },
+    guarantor: { name: "Guarantor", description: "보증기관 - 신용보강 및 보증 제공", role: "보증기관" },
+    lender: { name: "Lender", description: "대주단 - 대출 제공 금융기관", role: "대주단" },
+    appraiser: { name: "Appraiser", description: "감정평가사 - 담보 및 자산 가치 평가", role: "감정평가사" },
+  }
+
+  companyRoles.forEach(role => {
+    const template = companyMap[role]
     if (!template) return
     objects.push({
       name: template.name,
       description: template.description,
-      category: template.category,
+      category: "company",
       source: "ai-mapped",
       properties: [
-        { id: `${op}_util`, name: "Utilization", type: "number", required: false },
-        { id: `${op}_stat`, name: "Status", type: "string", required: true }
+        { id: `${role}_name`, name: "Name", type: "string", required: true },
+        { id: `${role}_rating`, name: "Credit_Rating", type: "string", required: true },
+        { id: `${role}_pd`, name: "Default_Probability", type: "number", required: false }
       ],
-      metadata: { neo4j_label: template.neo4j_label }
+      metadata: { neo4j_label: "Company", role: template.role }
     })
-    processNames.push(template.name)
-    if (plantName) {
-      links.push({ name: "OPERATES", fromType: plantName, toType: template.name, bidirectional: false, description: `공장 → ${template.name} 운영` })
-    }
+
+    // 회사-프로젝트 관계
+    projectNames.forEach(projName => {
+      if (role === "constructor" && (projName.includes("PF") || projName.includes("Real"))) {
+        links.push({ name: "CONSTRUCTS", fromType: template.name, toType: projName, bidirectional: false, neo4jType: "CONSTRUCTS", description: "시공사의 건설 책임" })
+      }
+      if (role === "developer" && projName.includes("PF")) {
+        links.push({ name: "DEVELOPS", fromType: template.name, toType: projName, bidirectional: false, neo4jType: "DEVELOPS", description: "시행사의 개발 사업 추진" })
+      }
+      if (role === "operator") {
+        links.push({ name: "OPERATES", fromType: template.name, toType: projName, bidirectional: false, neo4jType: "OPERATES", description: "운영사의 자산 운영" })
+      }
+      if (role === "lender") {
+        links.push({ name: "LENDS_TO", fromType: template.name, toType: projName, bidirectional: false, neo4jType: "LENDS_TO", description: "대주단의 대출 제공" })
+      }
+    })
   })
 
-  // 프로세스 간 순서 링크 (제조업의 경우)
-  if (domain === "manufacturing") {
-    if (ops.includes("smt") && ops.includes("inspection")) {
-      links.push({ name: "FEEDS_INTO", fromType: "SMT_Line", toType: "QC_Inspection", bidirectional: false, description: "SMT → 검사 투입" })
-    }
-    if (ops.includes("inspection") && ops.includes("assembly")) {
-      links.push({ name: "FEEDS_INTO", fromType: "QC_Inspection", toType: "Assembly_Line", bidirectional: false, description: "검사 통과 후 조립 투입" })
-    }
-    if (ops.includes("assembly") && ops.includes("test")) {
-      links.push({ name: "FEEDS_INTO", fromType: "Assembly_Line", toType: "Test_Line", bidirectional: false, description: "조립 완료 후 테스트" })
-    }
+  // ── 4. 트랜치 객체 ──────────────────────────────────────────
+  const trancheMap: Record<string, any> = {
+    senior: { name: "Senior_Tranche", description: "선순위 트랜치 - 우선 상환", seniority: "SENIOR", priority: 1 },
+    mezzanine: { name: "Mezzanine_Tranche", description: "중순위 트랜치 - 중간 위험/수익", seniority: "MEZZANINE", priority: 2 },
+    junior: { name: "Junior_Tranche", description: "후순위 트랜치 - 높은 위험/수익", seniority: "JUNIOR", priority: 3 },
+    equity: { name: "Equity_Tranche", description: "지분 트랜치 - 자본금/출자금", seniority: "EQUITY", priority: 4 },
   }
 
-  // ── 3. 공급망 객체 ──────────────────────────────────────────
-  if (scItems.includes("raw_material")) {
-    objects.push({
-      name: "Core_Material", description: "핵심 부품/원자재",
-      category: "material", source: "ai-mapped",
-      properties: [{ id: "cm1", name: "Stock_Level", type: "number", required: true }, { id: "cm2", name: "Unit_Price", type: "number", required: true }, { id: "cm3", name: "Lead_Time", type: "number", required: true }],
-      metadata: { neo4j_label: "Material" }
-    })
-    // 소비 관계
-    const firstProcess = processNames[0]
-    if (firstProcess) links.push({ name: "CONSUMES", fromType: firstProcess, toType: "Core_Material", bidirectional: false, description: `${firstProcess} → 원자재 소비` })
-  }
-  if (scItems.includes("wip")) {
-    objects.push({
-      name: "WIP_Module", description: "반제품 (Work-In-Progress) 모듈",
-      category: "product", source: "ai-mapped",
-      properties: [{ id: "wip1", name: "WIP_Count", type: "number", required: true }, { id: "wip2", name: "Quality_Grade", type: "string", required: false }],
-      metadata: { neo4j_label: "WIP" }
-    })
-    if (processNames.length > 0) links.push({ name: "PRODUCES", fromType: processNames[0], toType: "WIP_Module", bidirectional: false, description: "공정 → 반제품 생산" })
-    if (processNames.length > 1) links.push({ name: "FEEDS_INTO", fromType: "WIP_Module", toType: processNames[1], bidirectional: false, description: "반제품 → 다음 공정 투입" })
-  }
-  if (scItems.includes("finished_product")) {
-    objects.push({
-      name: "Final_Product", description: "완제품 - 최종 판매 또는 납품 제품",
-      category: "product", source: "ai-mapped",
-      properties: [{ id: "fp1", name: "Quality_Grade", type: "string", required: true }, { id: "fp2", name: "Unit_Price", type: "number", required: true }, { id: "fp3", name: "Defect_Rate", type: "number", required: false }],
-      metadata: { neo4j_label: "Product" }
-    })
-    const lastProcess = processNames[processNames.length - 1]
-    if (lastProcess) links.push({ name: "FINISHES", fromType: lastProcess, toType: "Final_Product", bidirectional: false, description: `${lastProcess} → 완제품 완성` })
-  }
-  if (scItems.includes("equipment")) {
-    objects.push({
-      name: "Production_Equipment", description: "생산 설비/장비",
-      category: "equipment", source: "ai-mapped",
-      properties: [{ id: "eq1", name: "OEE", type: "number", required: true }, { id: "eq2", name: "MTBF", type: "number", required: false }, { id: "eq3", name: "Status", type: "string", required: true }],
-      metadata: { neo4j_label: "Equipment" }
-    })
-    if (processNames.length > 0) links.push({ name: "INSTALLS", fromType: processNames[0], toType: "Production_Equipment", bidirectional: false, description: "공정에 설비 배치" })
-  }
-  if (scItems.includes("supplier")) {
-    objects.push({
-      name: "Key_Supplier", description: "핵심 부품/서비스 공급업체",
-      category: "supply_chain", source: "ai-mapped",
-      properties: [{ id: "sp1", name: "Lead_Time", type: "number", required: true }, { id: "sp2", name: "Quality_Grade", type: "string", required: true }],
-      metadata: { neo4j_label: "Supplier" }
-    })
-    if (scItems.includes("raw_material")) links.push({ name: "SUPPLIES_TO", fromType: "Key_Supplier", toType: "Core_Material", bidirectional: false, description: "공급업체 → 부품 납품" })
-  }
-  if (scItems.includes("customer")) {
-    objects.push({
-      name: "Key_Customer", description: "주요 고객사 - 완제품 수령 기업",
-      category: "supply_chain", source: "ai-mapped",
-      properties: [{ id: "cu1", name: "Delivery_Rate", type: "number", required: true }, { id: "cu2", name: "Region", type: "string", required: true }],
-      metadata: { neo4j_label: "Customer" }
-    })
-    if (scItems.includes("finished_product")) links.push({ name: "SHIPS_TO", fromType: "Final_Product", toType: "Key_Customer", bidirectional: false, description: "완제품 → 고객사 납품" })
-  }
-  if (scItems.includes("logistics_partner")) {
-    objects.push({
-      name: "Logistics_Partner", description: "물류/운송 파트너",
-      category: "supply_chain", source: "ai-mapped",
-      properties: [{ id: "lp1", name: "Lead_Time", type: "number", required: false }],
-      metadata: { neo4j_label: "Partner" }
-    })
-  }
-
-  // ── 4. KPI → 속성 생성 ────────────────────────────────────────
-  const kpiMap: Record<string, any> = {
-    utilization:   { name: "Utilization",   dataType: "number", description: "설비·라인 가동율 (%)", usedBy: processNames },
-    yield_rate:    { name: "Yield_Rate",    dataType: "number", description: "공정 수율 (%)", usedBy: processNames },
-    defect_rate:   { name: "Defect_Rate",   dataType: "number", description: "불량율 (%)", usedBy: ["Final_Product", "QC_Inspection", "Test_Line"] },
-    lead_time:     { name: "Lead_Time",     dataType: "number", description: "납기·공정 소요 기간 (일)", usedBy: ["Core_Material", "Key_Supplier"] },
-    stock_level:   { name: "Stock_Level",   dataType: "number", description: "재고 수위 (pcs)", usedBy: ["Core_Material", "WIP_Module"] },
-    unit_price:    { name: "Unit_Price",    dataType: "number", description: "부품 단가 또는 제조원가 (원)", usedBy: ["Core_Material", "Final_Product"] },
-    oee:           { name: "OEE",           dataType: "number", description: "설비종합효율 (%)", usedBy: ["Production_Equipment"] },
-    delivery_rate: { name: "Delivery_Rate", dataType: "number", description: "납기 준수율 (%)", usedBy: ["Key_Customer"] },
-    throughput:    { name: "Throughput",    dataType: "number", description: "단위시간당 처리량 (pcs/hr)", usedBy: processNames },
-    cost:          { name: "Annual_Revenue", dataType: "number", description: "연간 매출/비용 (억 원)", usedBy: [`${orgName}_HQ`] },
-  }
-
-  const existingObjectNames = objects.map((o: any) => o.name)
-  kpis.forEach(kpi => {
-    const template = kpiMap[kpi]
+  tranches.forEach(tr => {
+    const template = trancheMap[tr]
     if (!template) return
-    const usedBy = template.usedBy.filter((n: string) => existingObjectNames.includes(n))
-    props.push({ ...template, usedBy, source: "ai-mapped" })
+    objects.push({
+      name: template.name,
+      description: template.description,
+      category: "tranche",
+      source: "ai-mapped",
+      properties: [
+        { id: `${tr}_amount`, name: "Amount_B", type: "number", required: true },
+        { id: `${tr}_ratio`, name: "Ratio", type: "number", required: true },
+        { id: `${tr}_rate`, name: "Interest_Rate", type: "number", required: true },
+        { id: `${tr}_el`, name: "Expected_Loss", type: "number", required: false }
+      ],
+      metadata: { neo4j_label: "Tranche", seniority: template.seniority, priority: template.priority }
+    })
+
+    // 프로젝트-트랜치 관계
+    projectNames.forEach(projName => {
+      links.push({ name: "HAS_TRANCHE", fromType: projName, toType: template.name, bidirectional: false, neo4jType: "HAS_TRANCHE", description: `${projName}의 ${template.name}` })
+    })
+
+    // 트랜치-펀드 관계
+    if (fundStructure !== "direct") {
+      links.push({ name: "HELD_BY", fromType: template.name, toType: "Fund", bidirectional: false, neo4jType: "HELD_BY", description: `펀드의 ${template.name} 보유` })
+    }
   })
 
-  // 공통 속성 추가
-  props.push({ name: "Status", dataType: "string", description: "현재 운영 상태 (Running/Idle/Error)", usedBy: processNames.slice(0, 3), source: "ai-mapped" })
+  // ── 5. 담보 객체 ──────────────────────────────────────────
+  const collateralMap: Record<string, any> = {
+    real_property: { name: "Real_Property_Collateral", description: "부동산 담보 - 토지/건물/수익권", type: "REAL_PROPERTY" },
+    movable: { name: "Movable_Collateral", description: "동산 담보 - 기계/장비/항공기/선박", type: "MOVABLE" },
+    receivables: { name: "Receivables_Collateral", description: "채권 담보 - 매출채권/리스채권/PPA", type: "RECEIVABLES" },
+    equity: { name: "Equity_Collateral", description: "지분 담보 - SPC지분/펀드지분", type: "EQUITY" },
+    guarantee: { name: "Guarantee", description: "보증/신용보강 - 책임준공/연대보증", type: "GUARANTEE" },
+  }
 
-  return { objects, links, props }
+  collateralTypes.filter(c => c !== "none").forEach(colType => {
+    const template = collateralMap[colType]
+    if (!template) return
+    objects.push({
+      name: template.name,
+      description: template.description,
+      category: "collateral",
+      source: "ai-mapped",
+      properties: [
+        { id: `${colType}_value`, name: "Appraised_Value_B", type: "number", required: true },
+        { id: `${colType}_liq`, name: "Liquidation_Value_B", type: "number", required: true },
+        { id: `${colType}_haircut`, name: "Haircut", type: "number", required: true }
+      ],
+      metadata: { neo4j_label: "Collateral", collateral_type: template.type }
+    })
+
+    projectNames.forEach(projName => {
+      links.push({ name: "SECURED_BY", fromType: projName, toType: template.name, bidirectional: false, neo4jType: "SECURED_BY", description: `${projName}의 담보 설정` })
+    })
+  })
+
+  // ── 6. 약정 객체 ──────────────────────────────────────────
+  if (covenants.length > 0) {
+    objects.push({
+      name: "Financial_Covenant",
+      description: "재무 약정 - LTV/DSCR/ICR 등 기준",
+      category: "covenant",
+      source: "ai-mapped",
+      properties: [
+        { id: "cov_type", name: "Type", type: "string", required: true },
+        { id: "cov_threshold", name: "Threshold", type: "number", required: true },
+        { id: "cov_current", name: "Current_Value", type: "number", required: true },
+        { id: "cov_status", name: "Status", type: "string", required: true },
+        { id: "cov_direction", name: "Direction", type: "string", required: true }
+      ],
+      metadata: { neo4j_label: "Covenant", covenant_types: covenants }
+    })
+
+    projectNames.forEach(projName => {
+      links.push({ name: "HAS_COVENANT", fromType: projName, toType: "Financial_Covenant", bidirectional: false, neo4jType: "HAS_COVENANT", description: `${projName}의 재무 약정` })
+    })
+  }
+
+  // ── 7. 신용이벤트 객체 ──────────────────────────────────────
+  objects.push({
+    name: "Credit_Event",
+    description: "신용 이벤트 - 부도/구조조정/등급하락 등",
+    category: "credit_event",
+    source: "ai-mapped",
+    properties: [
+      { id: "evt_type", name: "Type", type: "string", required: true },
+      { id: "evt_date", name: "Occurred_Date", type: "date", required: true },
+      { id: "evt_severity", name: "Severity", type: "string", required: true },
+      { id: "evt_loss", name: "Estimated_Loss_B", type: "number", required: false }
+    ],
+    metadata: { neo4j_label: "CreditEvent" }
+  })
+
+  companyRoles.forEach(role => {
+    const template = companyMap[role]
+    if (template) {
+      links.push({ name: "TRIGGERS", fromType: template.name, toType: "Credit_Event", bidirectional: false, neo4jType: "TRIGGERS", description: `${template.role} 관련 신용 이벤트` })
+    }
+  })
+  projectNames.forEach(projName => {
+    links.push({ name: "AFFECTS", fromType: "Credit_Event", toType: projName, bidirectional: false, neo4jType: "AFFECTS", description: "신용 이벤트가 프로젝트에 영향" })
+  })
+
+  // ── 8. KPI 속성 생성 ────────────────────────────────────────
+  const kpiMap: Record<string, any> = {
+    ltv: { name: "LTV", dataType: "number", description: "담보인정비율 Loan-to-Value (%)" },
+    dscr: { name: "DSCR", dataType: "number", description: "원리금상환비율 Debt Service Coverage Ratio (배)" },
+    icr: { name: "ICR", dataType: "number", description: "이자보상비율 Interest Coverage Ratio (배)" },
+    irr: { name: "IRR", dataType: "number", description: "내부수익률 Internal Rate of Return (%)" },
+    npv: { name: "NPV_B", dataType: "number", description: "순현재가치 Net Present Value (억원)" },
+    cap_rate: { name: "Cap_Rate", dataType: "number", description: "자본환원율 Capitalization Rate (%)" },
+    noi: { name: "NOI_B", dataType: "number", description: "순영업이익 Net Operating Income (억원)" },
+    pd: { name: "Default_Probability", dataType: "number", description: "부도확률 PD (%)" },
+  }
+
+  riskMetrics.forEach(metric => {
+    const template = kpiMap[metric]
+    if (!template) return
+    props.push({
+      name: template.name,
+      dataType: template.dataType,
+      description: template.description,
+      usedBy: projectNames,
+      source: "ai-mapped"
+    })
+  })
+
+  return { 
+    objects, 
+    links, 
+    props,
+    summary: {
+      investorType,
+      assetTypes,
+      customerType,
+      fundStructure,
+      collateralTypes,
+      companyRoles,
+      tranches,
+      riskMetrics,
+      covenants,
+      valuationMethods
+    }
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// 채팅 메시지 타입
+// 메인 컴포넌트
 // ────────────────────────────────────────────────────────────────────────────
-type ChatMsg = {
-  role: "assistant" | "user"
-  text: string
-  stepId?: StepId
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// 위자드 다이얼로그 컴포넌트
-// ────────────────────────────────────────────────────────────────────────────
-interface OntologyWizardDialogProps {
+interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onComplete?: () => void
 }
 
-const STEP_ORDER: StepId[] = ["domain", "org_name", "org_structure", "operations", "supply_chain", "kpis", "review"]
-
-export function OntologyWizardDialog({ open, onOpenChange, onComplete }: OntologyWizardDialogProps) {
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([])
-  const [currentStepIdx, setCurrentStepIdx] = useState(0)
-  const [answers, setAnswers] = useState<Partial<Answers>>({})
-  const [multiSelected, setMultiSelected] = useState<string[]>([])
+export function OntologyWizardDialog({ open, onOpenChange }: Props) {
+  const [stepIndex, setStepIndex] = useState(0)
+  const [answers, setAnswers] = useState<Answers>({} as Answers)
+  const [messages, setMessages] = useState<{ role: "bot" | "user"; text: string }[]>([])
   const [textInput, setTextInput] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedOntology, setGeneratedOntology] = useState<ReturnType<typeof buildOntologyFromAnswers> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
-  const currentStep = STEPS.find(s => s.id === STEP_ORDER[currentStepIdx])!
-  const progress = Math.round((currentStepIdx / (STEP_ORDER.length - 1)) * 100)
+  // 현재 표시할 스텝 시퀀스 계산
+  const [stepSequence, setStepSequence] = useState<StepId[]>(["welcome"])
+  const currentStepId = stepSequence[stepIndex]
+  const currentStep = WIZARD_STEPS.find(s => s.id === currentStepId)!
+  const progress = ((stepIndex + 1) / stepSequence.length) * 100
 
-  // 도메인별 operations 옵션 주입
-  const getStepOptions = (step: Step): Option[] => {
-    if (step.id === "operations") {
-      return DOMAIN_OPERATIONS[(answers.domain as string) || "manufacturing"] || []
+  useEffect(() => {
+    if (open && stepIndex === 0 && messages.length === 0) {
+      pushBotMessages(WIZARD_STEPS[0].messages)
     }
-    return step.options || []
-  }
+  }, [open])
 
-  // 메시지 추가 (타이핑 효과)
-  const pushMessages = (messages: string[], stepId: StepId) => {
-    setIsTyping(true)
-    let delay = 0
-    messages.forEach((text, i) => {
-      delay += i === 0 ? 400 : 900
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
+  }, [messages])
+
+  function pushBotMessages(texts: string[]) {
+    texts.forEach((text, i) => {
       setTimeout(() => {
-        setChatMessages(prev => [...prev, { role: "assistant", text, stepId }])
-        if (i === messages.length - 1) setIsTyping(false)
-      }, delay)
+        setMessages(prev => [...prev, { role: "bot", text }])
+      }, i * 400)
     })
   }
 
-  // 초기화 및 첫 메시지
-  useEffect(() => {
-    if (!open) return
-    setChatMessages([])
-    setCurrentStepIdx(0)
-    setAnswers({})
-    setMultiSelected([])
-    setTextInput("")
-    pushMessages(STEPS[0].messages, "domain")
-  }, [open])
+  function calculateNextSteps(currentId: StepId, selectedValue?: string): StepId[] {
+    // 기본 순서
+    const defaultSequence: StepId[] = [
+      "welcome", "investor_type", "asset_type", "customer_type", 
+      "fund_structure", "collateral_type", "company_roles", 
+      "tranche_structure", "risk_metrics", "covenants", "valuation_method", "review"
+    ]
+    
+    const currentIndex = defaultSequence.indexOf(currentId)
+    if (currentIndex === -1) return defaultSequence
+    
+    // 현재까지의 시퀀스 유지 + 나머지
+    return [...stepSequence.slice(0, stepIndex + 1), ...defaultSequence.slice(currentIndex + 1)]
+  }
 
-  // 자동 스크롤
-  useEffect(() => {
-    setTimeout(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+  function handleOptionSelect(value: string) {
+    if (currentStep.type === "single") {
+      if (currentStep.id === "review") {
+        if (value === "confirm") {
+          handleGenerate()
+        } else {
+          resetWizard()
+        }
+        return
       }
-    }, 100)
-  }, [chatMessages, isTyping])
+      
+      setAnswers(prev => ({ ...prev, [currentStep.id]: value }))
+      const label = currentStep.options?.find(o => o.value === value)?.label || value
+      setMessages(prev => [...prev, { role: "user", text: label }])
+      
+      // 다음 스텝 시퀀스 업데이트
+      const newSequence = calculateNextSteps(currentStep.id, value)
+      setStepSequence(newSequence)
+      goNext()
+    } else if (currentStep.type === "multi") {
+      const current = (answers[currentStep.id] as string[]) || []
+      const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+      setAnswers(prev => ({ ...prev, [currentStep.id]: updated }))
+    }
+  }
 
-  // 단일 선택 처리
-  const handleSingleSelect = (value: string, label: string) => {
-    if (currentStep.id === "review") {
-      if (value === "restart") handleRestart()
-      else handleSave()
+  function handleMultiConfirm() {
+    const selected = (answers[currentStep.id] as string[]) || []
+    if (currentStep.minSelect && selected.length < currentStep.minSelect) {
+      toast({ title: "선택 필요", description: `최소 ${currentStep.minSelect}개를 선택해 주세요.`, variant: "destructive" })
       return
     }
-    const newAnswers = { ...answers, [currentStep.id]: value } as Answers
-    setAnswers(newAnswers)
-    setChatMessages(prev => [...prev, { role: "user", text: label }])
-    goNextStep(newAnswers)
+    const labels = selected.map(v => currentStep.options?.find(o => o.value === v)?.label || v)
+    setMessages(prev => [...prev, { role: "user", text: labels.join(", ") }])
+    goNext()
   }
 
-  // 복수 선택 토글
-  const handleMultiToggle = (value: string) => {
-    setMultiSelected(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    )
-  }
-
-  // 복수 선택 확정
-  const handleMultiConfirm = () => {
-    if (multiSelected.length < (currentStep.minSelect || 0)) return
-    const opts = getStepOptions(currentStep)
-    const labels = multiSelected.map(v => opts.find(o => o.value === v)?.label || v)
-    const newAnswers = { ...answers, [currentStep.id]: multiSelected } as Answers
-    setAnswers(newAnswers)
-    setChatMessages(prev => [...prev, { role: "user", text: labels.join(", ") }])
-    setMultiSelected([])
-    goNextStep(newAnswers)
-  }
-
-  // 텍스트 입력 확정
-  const handleTextConfirm = () => {
-    if (!textInput.trim()) return
-    const newAnswers = { ...answers, [currentStep.id]: textInput.trim() } as Answers
-    setAnswers(newAnswers)
-    setChatMessages(prev => [...prev, { role: "user", text: textInput.trim() }])
-    setTextInput("")
-    goNextStep(newAnswers)
-  }
-
-  // 다음 단계로 이동
-  const goNextStep = (_currentAnswers: Partial<Answers>) => {
-    const nextIdx = currentStepIdx + 1
-    if (nextIdx >= STEP_ORDER.length) return
-    setIsTyping(true) // 옵션이 메시지보다 먼저 보이는 현상 방지
-    setCurrentStepIdx(nextIdx)
-    const nextStep = STEPS.find(s => s.id === STEP_ORDER[nextIdx])!
-    setTimeout(() => pushMessages(nextStep.messages, nextStep.id), 300)
-  }
-
-  // 처음부터 다시
-  const handleRestart = () => {
-    setChatMessages([])
-    setCurrentStepIdx(0)
-    setAnswers({})
-    setMultiSelected([])
-    setTextInput("")
-    setTimeout(() => pushMessages(STEPS[0].messages, "domain"), 200)
-  }
-
-  // Firebase 저장
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      const { objects, links, props } = buildOntology(answers as Answers)
-      await OntologyService.seedCustomData(objects, links, props)
-      setChatMessages(prev => [...prev, {
-        role: "assistant",
-        text: `✅ 완료! Objects ${objects.length}개, Links ${links.length}개, Properties ${props.length}개가 Firebase에 저장되었습니다. 온톨로지 구성 탭에서 확인하세요!`,
-        stepId: "review"
-      }])
-      toast({
-        title: "온톨로지 생성 완료",
-        description: `Objects ${objects.length}개 · Links ${links.length}개 · Props ${props.length}개 저장됨`
-      })
+  function goNext() {
+    const nextIndex = stepIndex + 1
+    if (nextIndex < stepSequence.length) {
+      setStepIndex(nextIndex)
       setTimeout(() => {
-        onComplete?.()
-        onOpenChange(false)
-      }, 1500)
-    } catch (err: any) {
-      toast({ title: "저장 실패", description: err.message, variant: "destructive" })
-    } finally {
-      setIsSaving(false)
+        const nextStep = WIZARD_STEPS.find(s => s.id === stepSequence[nextIndex])
+        if (nextStep) {
+          if (nextStep.id === "review") {
+            const ontology = buildOntologyFromAnswers(answers)
+            setGeneratedOntology(ontology)
+          }
+          pushBotMessages(nextStep.messages)
+        }
+      }, 500)
     }
   }
 
-  // 리뷰 미리보기 데이터
-  const previewData = currentStep.id === "review" && Object.keys(answers).length >= 4
-    ? buildOntology(answers as Answers)
-    : null
+  function resetWizard() {
+    setStepIndex(0)
+    setStepSequence(["welcome"])
+    setAnswers({} as Answers)
+    setMessages([])
+    setGeneratedOntology(null)
+    setTimeout(() => pushBotMessages(WIZARD_STEPS[0].messages), 200)
+  }
+
+  async function handleGenerate() {
+    if (!generatedOntology) return
+    setIsGenerating(true)
+    try {
+      await OntologyService.seedCustomData(
+        generatedOntology.objects,
+        generatedOntology.links,
+        generatedOntology.props
+      )
+      toast({ title: "온톨로지 생성 완료", description: `${generatedOntology.objects.length}개 객체, ${generatedOntology.links.length}개 관계가 생성되었습니다.` })
+      onOpenChange(false)
+      resetWizard()
+    } catch (e: any) {
+      toast({ title: "생성 실패", description: e.message, variant: "destructive" })
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const selectedMulti = (answers[currentStep?.id] as string[]) || []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[90vh] bg-zinc-950 border-zinc-800 text-white flex flex-col p-0 gap-0 overflow-hidden">
-        {/* 헤더 */}
-        <DialogHeader className="px-6 pt-5 pb-3 border-b border-zinc-800 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <div className="p-1.5 bg-purple-500/20 rounded-lg">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-            </div>
-            온톨로지 구성 위자드
-          </DialogTitle>
-          <DialogDescription className="text-zinc-500 text-xs">
-            질문에 답하면 AI가 최적화된 객체·관계·속성을 자동 생성합니다
-          </DialogDescription>
-          <div className="flex items-center gap-3 mt-2">
-            <Progress value={progress} className="h-1.5 flex-1" />
-            <span className="text-xs text-zinc-500 w-8">{progress}%</span>
-          </div>
-        </DialogHeader>
-
-        {/* 채팅 영역 */}
-        <div className="flex-1 px-5 py-4 overflow-y-auto custom-scrollbar" ref={scrollRef as any}>
-          <div className="space-y-3">
-            {chatMessages.map((msg, idx) => (
-              <div key={idx} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                {/* 아바타 */}
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                  msg.role === "assistant" ? "bg-purple-500/20" : "bg-blue-500/20"
-                }`}>
-                  {msg.role === "assistant"
-                    ? <Bot className="w-4 h-4 text-purple-400" />
-                    : <User className="w-4 h-4 text-blue-400" />
-                  }
-                </div>
-                {/* 말풍선 */}
-                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                  msg.role === "assistant"
-                    ? "bg-zinc-800/80 text-zinc-200 rounded-tl-sm"
-                    : "bg-blue-600/30 text-blue-200 rounded-tr-sm"
-                }`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-
-            {/* 타이핑 인디케이터 */}
-            {isTyping && (
-              <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-purple-400" />
-                </div>
-                <div className="bg-zinc-800/80 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center">
-                  {[0, 150, 300].map(d => (
-                    <div key={d} className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 리뷰 프리뷰 */}
-            {!isTyping && currentStep.id === "review" && previewData && (
-              <div className="mt-2 space-y-2">
-                {[
-                  { icon: Database,  color: "text-purple-400", label: "생성될 객체", items: previewData.objects.map((o: any) => `${o.name} (${o.category})`), count: previewData.objects.length },
-                  { icon: LinkIcon,  color: "text-green-400",  label: "생성될 관계", items: previewData.links.map((l: any) => `${l.fromType} → ${l.toType}`), count: previewData.links.length },
-                  { icon: Tag,       color: "text-orange-400", label: "생성될 속성", items: previewData.props.map((p: any) => p.name), count: previewData.props.length },
-                ].map(({ icon: Icon, color, label, items, count }) => (
-                  <Card key={label} className="bg-zinc-900 border-zinc-700 p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Icon className={`w-4 h-4 ${color}`} />
-                      <span className="text-xs font-semibold text-zinc-300">{label}</span>
-                      <Badge className="bg-zinc-800 text-zinc-400 text-[10px] ml-auto">{count}개</Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {items.slice(0, 8).map((item: string, i: number) => (
-                        <Badge key={i} className="bg-zinc-800/50 text-zinc-500 border-zinc-700 text-[10px]">{item}</Badge>
-                      ))}
-                      {items.length > 8 && <Badge className="bg-zinc-800/50 text-zinc-600 text-[10px]">+{items.length - 8}</Badge>}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+      <DialogContent className="bg-zinc-900 border-zinc-800 max-w-4xl w-[95vw] h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* 고정 헤더 */}
+        <div className="px-6 pt-6 pb-4 border-b border-zinc-800 shrink-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              이지자산평가 온톨로지 구성 위자드
+            </DialogTitle>
+            <DialogDescription>
+              대체투자 자산평가에 최적화된 그래프 구조를 자동으로 생성합니다.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* 진행 상태 바 */}
+          <div className="flex items-center gap-4 mt-4">
+            <Progress value={progress} className="flex-1 h-2 [&>div]:bg-purple-500" />
+            <Badge variant="outline" className="text-purple-400 border-purple-400/50 shrink-0">
+              {stepIndex + 1} / {stepSequence.length}
+            </Badge>
           </div>
         </div>
 
-        {/* 입력 영역 */}
-        {!isTyping && (
-          <div className="px-5 pb-5 pt-3 border-t border-zinc-800 flex-shrink-0 space-y-3">
-            {/* 단일 선택 */}
-            {currentStep.type === "single" && (
-              <div className="grid grid-cols-1 gap-2">
-                {(currentStep.id === "review"
-                  ? currentStep.options!
-                  : getStepOptions(currentStep)
-                ).map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => handleSingleSelect(opt.value, `${opt.icon || ""} ${opt.label}`.trim())}
-                    disabled={isSaving}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:scale-[1.01] ${
-                      opt.value === "confirm"
-                        ? "bg-purple-600/20 border-purple-500/50 hover:bg-purple-600/30"
-                        : opt.value === "restart"
-                        ? "bg-zinc-800/50 border-zinc-700 hover:bg-zinc-700/50"
-                        : "bg-zinc-900 border-zinc-700 hover:border-purple-500/50 hover:bg-zinc-800"
-                    }`}
-                  >
-                    {opt.icon && <span className="text-lg">{opt.icon}</span>}
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-zinc-200 flex items-center gap-2">
-                        {opt.label}
-                        {opt.value === "confirm" && isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                      </div>
-                      {opt.desc && <div className="text-[11px] text-zinc-500 mt-0.5">{opt.desc}</div>}
+        {/* 스크롤 가능한 대화 영역 */}
+        <div className="flex-1 overflow-hidden px-6">
+          <ScrollArea ref={scrollRef} className="h-full py-4">
+            <div className="space-y-4 pb-4">
+              {messages.map((msg, idx) => (
+                <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+                  {msg.role === "bot" && (
+                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                      <Bot className="w-4 h-4 text-purple-400" />
                     </div>
-                    {opt.value !== "restart" && <ChevronRight className="w-4 h-4 text-zinc-600 flex-shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            )}
+                  )}
+                  <div className={`max-w-[75%] p-3 rounded-lg ${
+                    msg.role === "bot" 
+                      ? "bg-zinc-800 text-zinc-100" 
+                      : "bg-purple-600 text-white"
+                  }`}>
+                    {msg.text}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4 text-zinc-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
 
-            {/* 복수 선택 */}
-            {currentStep.type === "multi" && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {getStepOptions(currentStep).map(opt => {
-                    const selected = multiSelected.includes(opt.value)
+        {/* 고정 하단 - 선택 옵션 영역 */}
+        <div className="shrink-0 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur px-6 py-4 space-y-4">
+          {/* Review 단계 - 생성될 온톨로지 요약 */}
+          {currentStep?.id === "review" && generatedOntology ? (
+            <Card className="bg-zinc-800/50 border-zinc-700 p-4">
+              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <Database className="w-4 h-4 text-blue-400" />
+                생성될 온톨로지 구조
+              </h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="bg-zinc-900/50 rounded-lg p-3">
+                  <div className="text-zinc-400 text-xs mb-1">객체 (Nodes)</div>
+                  <div className="text-2xl font-bold text-emerald-400">{generatedOntology.objects.length}개</div>
+                  <div className="text-[10px] text-zinc-500 mt-1 line-clamp-1">
+                    {generatedOntology.objects.slice(0, 3).map(o => o.name).join(", ")}...
+                  </div>
+                </div>
+                <div className="bg-zinc-900/50 rounded-lg p-3">
+                  <div className="text-zinc-400 text-xs mb-1">관계 (Links)</div>
+                  <div className="text-2xl font-bold text-blue-400">{generatedOntology.links.length}개</div>
+                  <div className="text-[10px] text-zinc-500 mt-1 line-clamp-1">
+                    {generatedOntology.links.slice(0, 2).map(l => l.name).join(", ")}...
+                  </div>
+                </div>
+                <div className="bg-zinc-900/50 rounded-lg p-3">
+                  <div className="text-zinc-400 text-xs mb-1">속성 (Props)</div>
+                  <div className="text-2xl font-bold text-purple-400">{generatedOntology.props.length}개</div>
+                  <div className="text-[10px] text-zinc-500 mt-1 line-clamp-1">
+                    {generatedOntology.props.slice(0, 2).map(p => p.name).join(", ")}...
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ) : null}
+
+          {/* Single 선택 옵션 */}
+          {currentStep?.type === "single" && currentStep.options && (
+            <div className="grid grid-cols-2 gap-3">
+              {currentStep.options.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleOptionSelect(opt.value)}
+                  disabled={isGenerating}
+                  className="flex items-start gap-3 p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800 hover:border-purple-500/50 transition-all text-left disabled:opacity-50 group"
+                >
+                  <ChevronRight className="w-4 h-4 text-purple-400 mt-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm">{opt.label}</div>
+                    {opt.desc && <div className="text-xs text-zinc-400 mt-1 line-clamp-2">{opt.desc}</div>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Multi 선택 옵션 */}
+          {currentStep?.type === "multi" && currentStep.options && (
+            <div className="space-y-3">
+              <ScrollArea className="h-[180px]">
+                <div className="grid grid-cols-2 gap-2 pr-4">
+                  {currentStep.options.map((opt) => {
+                    const isSelected = selectedMulti.includes(opt.value)
                     return (
                       <button
                         key={opt.value}
-                        onClick={() => handleMultiToggle(opt.value)}
-                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
-                          selected
-                            ? "bg-purple-500/20 border-purple-500/60 text-purple-200"
-                            : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                        onClick={() => handleOptionSelect(opt.value)}
+                        className={`flex items-start gap-3 p-3 rounded-lg border transition-all text-left ${
+                          isSelected 
+                            ? "border-purple-500 bg-purple-500/20" 
+                            : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600"
                         }`}
                       >
-                        <span className="text-base">{opt.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">{opt.label}</div>
-                          {opt.desc && <div className="text-[10px] text-zinc-600 truncate">{opt.desc}</div>}
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 ${
+                          isSelected ? "bg-purple-500 border-purple-500" : "border-zinc-600"
+                        }`}>
+                          {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                         </div>
-                        {selected && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />}
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm">{opt.label}</div>
+                          {opt.desc && <div className="text-xs text-zinc-400 mt-1 line-clamp-2">{opt.desc}</div>}
+                        </div>
                       </button>
                     )
                   })}
                 </div>
-                <Button
-                  onClick={handleMultiConfirm}
-                  disabled={multiSelected.length < (currentStep.minSelect || 0)}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-sm"
+              </ScrollArea>
+              <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                <Badge variant="outline" className="text-zinc-400">
+                  {selectedMulti.length}개 선택됨 {currentStep.minSelect && `(최소 ${currentStep.minSelect}개)`}
+                </Badge>
+                <Button 
+                  onClick={handleMultiConfirm} 
+                  disabled={currentStep.minSelect ? selectedMulti.length < currentStep.minSelect : false}
+                  className="bg-purple-600 hover:bg-purple-700"
                 >
-                  {multiSelected.length > 0
-                    ? `${multiSelected.length}개 선택 완료 →`
-                    : `최소 ${currentStep.minSelect || 1}개 선택해주세요`
-                  }
+                  다음 단계
+                  <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* 텍스트 입력 */}
-            {currentStep.type === "text" && (
-              <div className="flex gap-2">
-                <Input
-                  value={textInput}
-                  onChange={e => setTextInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleTextConfirm()}
-                  placeholder={currentStep.placeholder}
-                  className="flex-1 bg-zinc-900 border-zinc-700 text-zinc-200 placeholder:text-zinc-600"
-                  autoFocus
-                />
-                <Button
-                  onClick={handleTextConfirm}
-                  disabled={!textInput.trim()}
-                  className="bg-purple-600 hover:bg-purple-700 px-4"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+          {/* 생성 중 로딩 */}
+          {isGenerating && (
+            <div className="flex items-center justify-center py-6 gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+              <span className="text-sm text-zinc-400">온톨로지 생성 중...</span>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )

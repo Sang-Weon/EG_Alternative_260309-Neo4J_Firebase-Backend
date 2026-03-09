@@ -1,4 +1,4 @@
-# K-Palantir: Ontology Digital Twin Solution
+# K-Palantir: Ontology EG Assey Pricing Alternative Asset Pricing
 
 *안티그래비티(Antigravity) 에이전트에 의해 고도화된 한국형 팔란티어 엔터프라이즈 솔루션*
 
