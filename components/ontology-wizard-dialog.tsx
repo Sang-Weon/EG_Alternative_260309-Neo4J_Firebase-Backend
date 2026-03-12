@@ -39,11 +39,25 @@ export function generateDefaultQuestionsFromSchema(
 ): DynamicQuestion[] {
   const questions: DynamicQuestion[] = []
   let priority = 1
+  const usedIds = new Set<string>()
+
+  // Helper to generate unique ID
+  const getUniqueId = (baseId: string): string => {
+    let id = baseId
+    let counter = 1
+    while (usedIds.has(id)) {
+      id = `${baseId}_${counter}`
+      counter++
+    }
+    usedIds.add(id)
+    return id
+  }
 
   // Generate questions from objects
-  objects.forEach(obj => {
+  objects.forEach((obj, objIndex) => {
+    const objId = getUniqueId(`obj_${obj.name}_${objIndex}`)
     questions.push({
-      id: `obj_${obj.name}`,
+      id: objId,
       question: `${obj.name} 객체를 포함하시겠습니까?`,
       category: "object",
       sourceEntity: obj.name,
@@ -53,9 +67,10 @@ export function generateDefaultQuestionsFromSchema(
     })
 
     // Generate questions from properties
-    obj.properties?.forEach(prop => {
+    obj.properties?.forEach((prop, propIndex) => {
+      const propId = getUniqueId(`prop_${obj.name}_${prop.name}_${propIndex}`)
       questions.push({
-        id: `prop_${obj.name}_${prop.name}`,
+        id: propId,
         question: `${obj.name}의 ${prop.name} 속성을 관리하시겠습니까?`,
         category: "attribute",
         sourceEntity: obj.name,
@@ -67,10 +82,11 @@ export function generateDefaultQuestionsFromSchema(
     })
   })
 
-  // Generate questions from relationships - use fromType_toType_name for unique IDs
+  // Generate questions from relationships - use globally unique IDs
   links.forEach((link, index) => {
+    const relId = getUniqueId(`rel_${link.fromType}_${link.toType}_${link.name}_${index}`)
     questions.push({
-      id: `rel_${link.fromType}_${link.toType}_${link.name}_${index}`,
+      id: relId,
       question: `${link.fromType}와 ${link.toType} 간의 ${link.name} 관계를 모델링하시겠습니까?`,
       category: "relationship",
       sourceRelationship: link.name,

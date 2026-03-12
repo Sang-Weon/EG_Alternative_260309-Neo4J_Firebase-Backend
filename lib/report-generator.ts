@@ -208,8 +208,32 @@ export const ReportGenerator = {
     };
 
     // 5. Firebase에 저장
+    // Firebase는 중첩 배열을 지원하지 않으므로 직렬화하여 저장
     try {
-      const docRef = await addDoc(collection(db, "investmentReports"), report);
+      const sanitizeForFirebase = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) {
+          // Check if any element is an array (nested array)
+          const hasNestedArray = obj.some(item => Array.isArray(item));
+          if (hasNestedArray) {
+            // Serialize nested arrays to JSON strings
+            return obj.map(item => Array.isArray(item) ? JSON.stringify(item) : sanitizeForFirebase(item));
+          }
+          return obj.map(sanitizeForFirebase);
+        }
+        const cleaned: Record<string, any> = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (value !== undefined) {
+            cleaned[key] = sanitizeForFirebase(value);
+          }
+        }
+        return cleaned;
+      };
+      
+      const sanitizedReport = sanitizeForFirebase(report);
+      sanitizedReport.generatedAt = serverTimestamp();
+      const docRef = await addDoc(collection(db, "investmentReports"), sanitizedReport);
       report.id = docRef.id;
     } catch (error) {
       console.warn("[ReportGenerator] Firebase save failed:", error);

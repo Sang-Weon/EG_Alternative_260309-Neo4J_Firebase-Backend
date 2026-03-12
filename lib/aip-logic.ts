@@ -121,13 +121,27 @@ export const AIPLogic = {
       recommendation = this.generateValuationRecommendation(result);
     }
 
+    // Helper function to recursively remove undefined values
+    const removeUndefined = (obj: any): any => {
+      if (obj === undefined) return null;
+      if (obj === null || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(removeUndefined);
+      const cleaned: Record<string, any> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = removeUndefined(value);
+        }
+      }
+      return cleaned;
+    };
+
     const scenario: AssetSimulationScenario = {
       name,
       scenarioType,
-      targetAssetId: variables.projectId || null,
-      targetCompanyId: variables.companyId || null,
-      variables,
-      result,
+      targetAssetId: variables.projectId ?? null,
+      targetCompanyId: variables.companyId ?? null,
+      variables: removeUndefined(variables),
+      result: removeUndefined(result),
       recommendation,
       createdAt: serverTimestamp()
     };
@@ -135,9 +149,7 @@ export const AIPLogic = {
     // Firebase에 저장 (실패해도 결과는 반환)
     // undefined 값을 null로 변환하여 Firebase 호환성 확보
     try {
-      const sanitizedScenario = JSON.parse(JSON.stringify(scenario, (_, value) => 
-        value === undefined ? null : value
-      ));
+      const sanitizedScenario = removeUndefined(scenario);
       sanitizedScenario.createdAt = serverTimestamp();
       const docRef = await addDoc(collection(db, "assetSimulations"), sanitizedScenario);
       scenario.id = docRef.id;
