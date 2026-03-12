@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText, Briefcase } from "lucide-react"
+import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText, Briefcase, Shield } from "lucide-react"
 
 interface OntologySidebarProps {
   selectedMenu: string
@@ -17,6 +17,7 @@ const menuItems = [
   { id: "연쇄부도 시뮬레이션", icon: TrendingUp, label: "연쇄부도 시뮬레이션", group: "평가" },
   { id: "투자 보고서", icon: FileText, label: "투자 분석 보고서", group: "리포트" },
   { id: "서비스오퍼링", icon: Briefcase, label: "서비스오퍼링 (대고객)", group: "리포트" },
+  { id: "규제준수", icon: Shield, label: "규제준수 모니터링", group: "리포트" },
 ]
 
 export function OntologySidebar({ selectedMenu, onMenuSelect }: OntologySidebarProps) {
