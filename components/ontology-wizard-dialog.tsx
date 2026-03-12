@@ -11,10 +11,77 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Bot, User, ChevronRight, CheckCircle2, Loader2, Sparkles,
   Database, LinkIcon, Tag, Building2, Landmark, Shield, AlertTriangle,
-  TrendingUp, Layers, Users, FileText, ArrowRight, RotateCcw
+  TrendingUp, Layers, Users, FileText, ArrowRight, RotateCcw, 
+  HelpCircle, Settings, Network, RefreshCw
 } from "lucide-react"
 import { OntologyService } from "@/lib/ontology-service"
 import { useToast } from "@/hooks/use-toast"
+
+// ────────────────────────────────────────────────────────────────────────────
+// Dynamic Question Types - Neo4j 객체/속성/관계 기반 동적 질문 생성
+// ────────────────────────────────────────────────────────────────────────────
+export interface DynamicQuestion {
+  id: string
+  question: string
+  category: "object" | "attribute" | "relationship"
+  sourceEntity?: string // Neo4j 객체명
+  sourceProperty?: string // Neo4j 속성명
+  sourceRelationship?: string // Neo4j 관계명
+  isDefault: boolean
+  isSelected: boolean
+  priority: number
+}
+
+// Default questions generator based on Neo4j schema
+export function generateDefaultQuestionsFromSchema(
+  objects: { name: string; category?: string; properties?: { name: string; type: string }[] }[],
+  links: { name: string; fromType: string; toType: string }[]
+): DynamicQuestion[] {
+  const questions: DynamicQuestion[] = []
+  let priority = 1
+
+  // Generate questions from objects
+  objects.forEach(obj => {
+    questions.push({
+      id: `obj_${obj.name}`,
+      question: `${obj.name} 객체를 포함하시겠습니까?`,
+      category: "object",
+      sourceEntity: obj.name,
+      isDefault: true,
+      isSelected: true,
+      priority: priority++
+    })
+
+    // Generate questions from properties
+    obj.properties?.forEach(prop => {
+      questions.push({
+        id: `prop_${obj.name}_${prop.name}`,
+        question: `${obj.name}의 ${prop.name} 속성을 관리하시겠습니까?`,
+        category: "attribute",
+        sourceEntity: obj.name,
+        sourceProperty: prop.name,
+        isDefault: true,
+        isSelected: prop.type === "number" || prop.name.includes("Rate") || prop.name.includes("Value"),
+        priority: priority++
+      })
+    })
+  })
+
+  // Generate questions from relationships
+  links.forEach(link => {
+    questions.push({
+      id: `rel_${link.name}`,
+      question: `${link.fromType}와 ${link.toType} 간의 ${link.name} 관계를 모델링하시겠습니까?`,
+      category: "relationship",
+      sourceRelationship: link.name,
+      isDefault: true,
+      isSelected: true,
+      priority: priority++
+    })
+  })
+
+  return questions
+}
 
 // ────────────────────────────────────────────────────────────────────────────
 // 분기형 질문 흐름 정의 - 대체투자 가치평가 관점
@@ -31,6 +98,7 @@ type StepId =
   | "risk_metrics" 
   | "covenants" 
   | "valuation_method"
+  | "dynamic_questions"
   | "review"
 
 type SelectType = "single" | "multi" | "text"
@@ -226,6 +294,16 @@ const WIZARD_STEPS: Step[] = [
       { value: "replacement", label: "대체원가법", desc: "동일자산 재취득 비용 기준", icon: "refresh" },
       { value: "residual", label: "잔여법 (개발형)", desc: "완공가치 - 사업비 = 토지가치", icon: "layers" },
     ]
+  },
+  {
+    id: "dynamic_questions",
+    type: "multi",
+    messages: [
+      "거의 다 됐어요! 아래는 Neo4j 그래프 스키마를 기반으로 자동 생성된 구성 질문입니다.",
+      "필요한 항목을 선택하거나 사용자 정의 질문을 추가할 수 있습니다."
+    ],
+    options: [], // dynamically populated
+    minSelect: 0
   },
   {
     id: "review",
@@ -585,6 +663,57 @@ export function OntologyWizardDialog({ open, onOpenChange }: Props) {
   const [generatedOntology, setGeneratedOntology] = useState<ReturnType<typeof buildOntologyFromAnswers> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
+  
+  // Dynamic questions state
+  const [dynamicQuestions, setDynamicQuestions] = useState<DynamicQuestion[]>([])
+  const [questionFilter, setQuestionFilter] = useState<"all" | "object" | "attribute" | "relationship">("all")
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false)
+
+  // Load dynamic questions when reaching that step
+  const loadDynamicQuestions = useCallback(async () => {
+    setIsLoadingQuestions(true)
+    try {
+      // Get existing objects and links from the generated ontology or create preview
+      const previewOntology = buildOntologyFromAnswers(answers)
+      const questions = generateDefaultQuestionsFromSchema(
+        previewOntology.objects,
+        previewOntology.links
+      )
+      setDynamicQuestions(questions)
+    } catch (error) {
+      console.error("Error loading dynamic questions:", error)
+      // Generate fallback questions
+      setDynamicQuestions([
+        { id: "q1", question: "프로젝트 가치평가 모델을 구성하시겠습니까?", category: "object", isDefault: true, isSelected: true, priority: 1 },
+        { id: "q2", question: "리스크 지표(LTV, DSCR)를 관리하시겠습니까?", category: "attribute", isDefault: true, isSelected: true, priority: 2 },
+        { id: "q3", question: "시공사-프로젝트 관계를 모델링하시겠습니까?", category: "relationship", isDefault: true, isSelected: true, priority: 3 },
+      ])
+    } finally {
+      setIsLoadingQuestions(false)
+    }
+  }, [answers])
+
+  const toggleQuestion = (id: string) => {
+    setDynamicQuestions(prev => 
+      prev.map(q => q.id === id ? { ...q, isSelected: !q.isSelected } : q)
+    )
+  }
+
+  const selectAllQuestions = (category?: "object" | "attribute" | "relationship") => {
+    setDynamicQuestions(prev => 
+      prev.map(q => (!category || q.category === category) ? { ...q, isSelected: true } : q)
+    )
+  }
+
+  const deselectAllQuestions = (category?: "object" | "attribute" | "relationship") => {
+    setDynamicQuestions(prev => 
+      prev.map(q => (!category || q.category === category) ? { ...q, isSelected: false } : q)
+    )
+  }
+
+  const filteredQuestions = dynamicQuestions.filter(q => 
+    questionFilter === "all" || q.category === questionFilter
+  )
 
   // 현재 표시할 스텝 시퀀스 계산
   const [stepSequence, setStepSequence] = useState<StepId[]>(["welcome"])
@@ -611,11 +740,12 @@ export function OntologyWizardDialog({ open, onOpenChange }: Props) {
   }
 
   function calculateNextSteps(currentId: StepId, selectedValue?: string): StepId[] {
-    // 기본 순서
+    // 기본 순서 - dynamic_questions 추가
     const defaultSequence: StepId[] = [
       "welcome", "investor_type", "asset_type", "customer_type", 
       "fund_structure", "collateral_type", "company_roles", 
-      "tranche_structure", "risk_metrics", "covenants", "valuation_method", "review"
+      "tranche_structure", "risk_metrics", "covenants", "valuation_method", 
+      "dynamic_questions", "review"
     ]
     
     const currentIndex = defaultSequence.indexOf(currentId)
@@ -669,6 +799,10 @@ export function OntologyWizardDialog({ open, onOpenChange }: Props) {
       setTimeout(() => {
         const nextStep = WIZARD_STEPS.find(s => s.id === stepSequence[nextIndex])
         if (nextStep) {
+          if (nextStep.id === "dynamic_questions") {
+            // Load dynamic questions from Neo4j schema
+            loadDynamicQuestions()
+          }
           if (nextStep.id === "review") {
             const ontology = buildOntologyFromAnswers(answers)
             setGeneratedOntology(ontology)
@@ -818,7 +952,7 @@ export function OntologyWizardDialog({ open, onOpenChange }: Props) {
           )}
 
           {/* Multi 선택 옵션 */}
-          {currentStep?.type === "multi" && currentStep.options && (
+          {currentStep?.type === "multi" && currentStep.id !== "dynamic_questions" && currentStep.options && (
             <div className="space-y-3">
               <ScrollArea className="h-[180px]">
                 <div className="grid grid-cols-2 gap-2 pr-4">
@@ -855,6 +989,112 @@ export function OntologyWizardDialog({ open, onOpenChange }: Props) {
                 <Button 
                   onClick={handleMultiConfirm} 
                   disabled={currentStep.minSelect ? selectedMulti.length < currentStep.minSelect : false}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  다음 단계
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Dynamic Questions Step - Neo4j 기반 동적 질문 */}
+          {currentStep?.id === "dynamic_questions" && (
+            <div className="space-y-4">
+              {/* Filter tabs */}
+              <div className="flex items-center gap-2 pb-3 border-b border-zinc-800">
+                <span className="text-xs text-zinc-500">필터:</span>
+                {[
+                  { value: "all" as const, label: "전체", icon: Settings },
+                  { value: "object" as const, label: "객체", icon: Database },
+                  { value: "attribute" as const, label: "속성", icon: Tag },
+                  { value: "relationship" as const, label: "관계", icon: Network },
+                ].map(({ value, label, icon: Icon }) => (
+                  <Button
+                    key={value}
+                    size="sm"
+                    variant={questionFilter === value ? "default" : "outline"}
+                    onClick={() => setQuestionFilter(value)}
+                    className={`h-7 text-xs ${questionFilter === value ? "bg-purple-600" : "border-zinc-700"}`}
+                  >
+                    <Icon className="w-3 h-3 mr-1" />
+                    {label}
+                  </Button>
+                ))}
+                <div className="flex-1" />
+                <Button size="sm" variant="ghost" onClick={() => selectAllQuestions(questionFilter === "all" ? undefined : questionFilter)} className="h-7 text-xs text-emerald-400">
+                  전체 선택
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => deselectAllQuestions(questionFilter === "all" ? undefined : questionFilter)} className="h-7 text-xs text-zinc-400">
+                  전체 해제
+                </Button>
+              </div>
+
+              {/* Questions list with scrollbar */}
+              {isLoadingQuestions ? (
+                <div className="flex items-center justify-center py-8 gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                  <span className="text-sm text-zinc-400">Neo4j 스키마에서 질문 생성 중...</span>
+                </div>
+              ) : (
+                <ScrollArea className="h-[220px]">
+                  <div className="space-y-2 pr-4">
+                    {filteredQuestions.map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => toggleQuestion(q.id)}
+                        className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left ${
+                          q.isSelected
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-zinc-700 bg-zinc-800/30 hover:border-zinc-600"
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 ${
+                          q.isSelected ? "bg-purple-500 border-purple-500" : "border-zinc-600"
+                        }`}>
+                          {q.isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <HelpCircle className="w-3 h-3 text-zinc-500" />
+                            <span className="text-sm text-zinc-200">{q.question}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <Badge className={`text-[9px] ${
+                              q.category === "object" ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
+                              q.category === "attribute" ? "bg-orange-500/20 text-orange-400 border-orange-500/30" :
+                              "bg-green-500/20 text-green-400 border-green-500/30"
+                            }`}>
+                              {q.category === "object" ? "객체" : q.category === "attribute" ? "속성" : "관계"}
+                            </Badge>
+                            {q.sourceEntity && (
+                              <span className="text-[10px] text-zinc-500 font-mono">{q.sourceEntity}</span>
+                            )}
+                            {q.sourceProperty && (
+                              <span className="text-[10px] text-zinc-500 font-mono">.{q.sourceProperty}</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+
+              {/* Summary and next button */}
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+                <div className="flex items-center gap-4">
+                  <Badge variant="outline" className="text-zinc-400">
+                    {dynamicQuestions.filter(q => q.isSelected).length} / {dynamicQuestions.length} 선택됨
+                  </Badge>
+                  <div className="flex gap-2 text-[10px]">
+                    <span className="text-blue-400">객체: {dynamicQuestions.filter(q => q.category === "object" && q.isSelected).length}</span>
+                    <span className="text-orange-400">속성: {dynamicQuestions.filter(q => q.category === "attribute" && q.isSelected).length}</span>
+                    <span className="text-green-400">관계: {dynamicQuestions.filter(q => q.category === "relationship" && q.isSelected).length}</span>
+                  </div>
+                </div>
+                <Button
+                  onClick={goNext}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
                   다음 단계

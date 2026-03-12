@@ -7,9 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Network, Eye, ZoomIn, ZoomOut, Loader2, Database, 
-  ChevronRight, Tag, LinkIcon, Maximize2, LayoutGrid
+  ChevronRight, Tag, LinkIcon, Maximize2, LayoutGrid, Hand, MousePointer
 } from "lucide-react"
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { AIReasoningDialog } from "./ai-reasoning-dialog"
 import { OntologyService, ObjectType, LinkType, PropertyType } from "@/lib/ontology-service"
 
@@ -174,7 +174,7 @@ function calculateHierarchicalLayout(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 메인 컴포넌트
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════��═══════════════════════════
 export function OntologyGraphViewer() {
   const [objectTypes, setObjectTypes] = useState<ObjectType[]>([])
   const [linkTypes, setLinkTypes] = useState<LinkType[]>([])
@@ -187,6 +187,10 @@ export function OntologyGraphViewer() {
   const [showProperties, setShowProperties] = useState(false)
   const [viewMode, setViewMode] = useState<"graph" | "hierarchy">("graph")
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [isPanMode, setIsPanMode] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const svgContainerRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     setIsLoading(true)
@@ -231,6 +235,30 @@ export function OntologyGraphViewer() {
     return connected
   }, [selectedNodeId, edges])
 
+  // Pan/drag handlers for graph navigation
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!isPanMode) return
+    e.preventDefault()
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y })
+  }, [isPanMode, panOffset])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !isPanMode) return
+    e.preventDefault()
+    const newX = e.clientX - dragStart.x
+    const newY = e.clientY - dragStart.y
+    setPanOffset({ x: newX, y: newY })
+  }, [isDragging, isPanMode, dragStart])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
   return (
     <>
       <Card className="bg-zinc-900 border-zinc-800 overflow-hidden relative">
@@ -264,6 +292,28 @@ export function OntologyGraphViewer() {
         {/* 컨트롤 바 */}
         <div className="px-6 py-3 border-b border-zinc-800 flex items-center justify-between gap-4 bg-zinc-900/50">
           <div className="flex items-center gap-3">
+            {/* 팬/선택 모드 토글 */}
+            <div className="flex items-center gap-1 bg-zinc-800/50 rounded-lg p-1">
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className={`h-7 w-7 ${!isPanMode ? "bg-blue-500/20 text-blue-400" : ""}`}
+                onClick={() => setIsPanMode(false)}
+                title="선택 모드"
+              >
+                <MousePointer className="w-4 h-4" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className={`h-7 w-7 ${isPanMode ? "bg-emerald-500/20 text-emerald-400" : ""}`}
+                onClick={() => setIsPanMode(true)}
+                title="드래그 이동 모드"
+              >
+                <Hand className="w-4 h-4" />
+              </Button>
+            </div>
+            
             {/* 줌 컨트롤 */}
             <div className="flex items-center gap-1 bg-zinc-800/50 rounded-lg p-1">
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoomLevel(prev => Math.max(0.3, prev - 0.1))}>
@@ -302,7 +352,22 @@ export function OntologyGraphViewer() {
         </div>
         
         {/* 그래프 영역 */}
-        <div className="relative bg-zinc-950/50 h-[550px] overflow-hidden">
+        <div 
+          ref={svgContainerRef}
+          className={`relative bg-zinc-950/50 h-[550px] overflow-hidden ${isPanMode ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-default"}`}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* Pan mode indicator */}
+          {isPanMode && (
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg text-xs border border-emerald-500/30">
+              <Hand className="w-3 h-3" />
+              드래그하여 그래프 이동
+            </div>
+          )}
+          
           {nodes.length === 0 && !isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
               <Database className="w-12 h-12 text-zinc-800" />
@@ -311,11 +376,11 @@ export function OntologyGraphViewer() {
           )}
           
           <svg 
-            className="w-full h-full cursor-grab active:cursor-grabbing"
+            className="w-full h-full"
             style={{
-              transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+              transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
               transformOrigin: "center",
-              transition: "transform 0.2s ease-out"
+              transition: isDragging ? "none" : "transform 0.2s ease-out"
             }}
           >
             <defs>

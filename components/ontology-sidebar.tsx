@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText } from "lucide-react"
+import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText, Briefcase } from "lucide-react"
 
 interface OntologySidebarProps {
   selectedMenu: string
@@ -10,12 +10,13 @@ interface OntologySidebarProps {
 }
 
 const menuItems = [
-  { id: "포트폴리오 대시보드", icon: LayoutDashboard, label: "자산 포트폴리오 대시보드" },
-  { id: "온톨로지 뷰", icon: Network, label: "대체투자 온톨로지 뷰" },
-  { id: "가치평가 시뮬레이션", icon: Calculator, label: "가치평가 시뮬레이션" },
-  { id: "리스크/약정 모니터링", icon: AlertTriangle, label: "리스크 & 약정 모니터링" },
-  { id: "연쇄부도 시뮬레이션", icon: TrendingUp, label: "연쇄부도 시뮬레이션" },
-  { id: "투자 보고서", icon: FileText, label: "투자 분석 보고서" },
+  { id: "포트폴리오 대시보드", icon: LayoutDashboard, label: "자산 포트폴리오 대시보드", group: "공통" },
+  { id: "온톨로지 뷰", icon: Network, label: "대체투자 온톨로지 뷰", group: "공통" },
+  { id: "가치평가 시뮬레이션", icon: Calculator, label: "가치평가 시뮬레이션", group: "평가" },
+  { id: "리스크/약정 모니터링", icon: AlertTriangle, label: "리스크 & 약정 모니터링", group: "평가" },
+  { id: "연쇄부도 시뮬레이션", icon: TrendingUp, label: "연쇄부도 시뮬레이션", group: "평가" },
+  { id: "투자 보고서", icon: FileText, label: "투자 분석 보고서", group: "리포트" },
+  { id: "서비스오퍼링", icon: Briefcase, label: "서비스오퍼링 (대고객)", group: "리포트" },
 ]
 
 export function OntologySidebar({ selectedMenu, onMenuSelect }: OntologySidebarProps) {
