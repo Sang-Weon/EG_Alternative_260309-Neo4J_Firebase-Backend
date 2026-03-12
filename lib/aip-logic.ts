@@ -121,28 +121,32 @@ export const AIPLogic = {
       recommendation = this.generateValuationRecommendation(result);
     }
 
-    // Helper function to recursively remove undefined values
+    // Helper function to recursively remove undefined values and replace with null
     const removeUndefined = (obj: any): any => {
       if (obj === undefined) return null;
-      if (obj === null || typeof obj !== 'object') return obj;
-      if (Array.isArray(obj)) return obj.map(removeUndefined);
+      if (obj === null) return null;
+      if (typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(item => removeUndefined(item));
       const cleaned: Record<string, any> = {};
       for (const [key, value] of Object.entries(obj)) {
-        if (value !== undefined) {
-          cleaned[key] = removeUndefined(value);
-        }
+        // Always include the key, but convert undefined to null
+        cleaned[key] = value === undefined ? null : removeUndefined(value);
       }
       return cleaned;
     };
 
+    // Ensure targetAssetId and targetCompanyId are never undefined
+    const targetAssetId = variables.projectId !== undefined ? variables.projectId : null;
+    const targetCompanyId = variables.companyId !== undefined ? variables.companyId : null;
+
     const scenario: AssetSimulationScenario = {
       name,
       scenarioType,
-      targetAssetId: variables.projectId ?? null,
-      targetCompanyId: variables.companyId ?? null,
+      targetAssetId,
+      targetCompanyId,
       variables: removeUndefined(variables),
       result: removeUndefined(result),
-      recommendation,
+      recommendation: recommendation || "",
       createdAt: serverTimestamp()
     };
 
@@ -150,8 +154,12 @@ export const AIPLogic = {
     // undefined 값을 null로 변환하여 Firebase 호환성 확보
     try {
       const sanitizedScenario = removeUndefined(scenario);
+      // serverTimestamp()를 다시 설정 (removeUndefined에서 제거될 수 있음)
       sanitizedScenario.createdAt = serverTimestamp();
-      const docRef = await addDoc(collection(db, "assetSimulations"), sanitizedScenario);
+      // 최종 검증: undefined가 없는지 확인
+      const finalData = JSON.parse(JSON.stringify(sanitizedScenario, (_, v) => v === undefined ? null : v));
+      finalData.createdAt = serverTimestamp();
+      const docRef = await addDoc(collection(db, "assetSimulations"), finalData);
       scenario.id = docRef.id;
     } catch (firebaseError) {
       console.warn("[AIPLogic] Firebase 저장 실패, 로컬 결과만 반환:", firebaseError);
