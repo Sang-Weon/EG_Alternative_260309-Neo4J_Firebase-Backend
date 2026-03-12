@@ -414,13 +414,17 @@ function ValuationSection({ section }: { section: any }) {
               </tr>
             </thead>
             <tbody>
-              {section.tables[0].rows.map((row: any[], i: number) => (
-                <tr key={i} className="border-b border-zinc-800">
-                  {row.map((cell, j) => (
-                    <td key={j} className="py-2 text-zinc-300">{cell}</td>
-                  ))}
-                </tr>
-              ))}
+              {section.tables[0].rows.map((row: any, i: number) => {
+                // Handle both array and JSON string formats (Firebase nested array workaround)
+                const rowData = typeof row === 'string' ? JSON.parse(row) : (Array.isArray(row) ? row : [row])
+                return (
+                  <tr key={i} className="border-b border-zinc-800">
+                    {rowData.map((cell: any, j: number) => (
+                      <td key={j} className="py-2 text-zinc-300">{cell}</td>
+                    ))}
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </Card>
