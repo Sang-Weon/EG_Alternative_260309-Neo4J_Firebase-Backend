@@ -124,8 +124,8 @@ export const AIPLogic = {
     const scenario: AssetSimulationScenario = {
       name,
       scenarioType,
-      targetAssetId: variables.projectId,
-      targetCompanyId: variables.companyId,
+      targetAssetId: variables.projectId || null,
+      targetCompanyId: variables.companyId || null,
       variables,
       result,
       recommendation,
@@ -133,8 +133,13 @@ export const AIPLogic = {
     };
 
     // Firebase에 저장 (실패해도 결과는 반환)
+    // undefined 값을 null로 변환하여 Firebase 호환성 확보
     try {
-      const docRef = await addDoc(collection(db, "assetSimulations"), scenario);
+      const sanitizedScenario = JSON.parse(JSON.stringify(scenario, (_, value) => 
+        value === undefined ? null : value
+      ));
+      sanitizedScenario.createdAt = serverTimestamp();
+      const docRef = await addDoc(collection(db, "assetSimulations"), sanitizedScenario);
       scenario.id = docRef.id;
     } catch (firebaseError) {
       console.warn("[AIPLogic] Firebase 저장 실패, 로컬 결과만 반환:", firebaseError);
