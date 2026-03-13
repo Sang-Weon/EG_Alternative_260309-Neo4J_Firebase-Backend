@@ -186,7 +186,7 @@ const SAMPLE_PARSED_DATA: ParsedDataField[] = [
 
 // ────────────────────────────────────────────────────────────────────────────
 // Component
-// ────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────��──────────────────
 
 export function CovenantWorkflowDashboard() {
   const [requests, setRequests] = useState<CovenantRequest[]>(SAMPLE_REQUESTS)
@@ -199,6 +199,11 @@ export function CovenantWorkflowDashboard() {
   const [generatedEmail, setGeneratedEmail] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [originalDocDialogOpen, setOriginalDocDialogOpen] = useState(false)
+  const [graphSyncDialogOpen, setGraphSyncDialogOpen] = useState(false)
+  const [graphSyncStep, setGraphSyncStep] = useState(0)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncCompleteDialogOpen, setSyncCompleteDialogOpen] = useState(false)
   const { toast } = useToast()
 
   // KPI 계산
@@ -267,6 +272,55 @@ EG자산평가 ${request.assignee} 드림`
   const handleViewParsing = (request: CovenantRequest) => {
     setSelectedRequest(request)
     setParsingDialogOpen(true)
+  }
+
+  // 원본 문서 보기
+  const handleViewOriginal = () => {
+    setOriginalDocDialogOpen(true)
+  }
+
+  // Graph DB 반영 워크플로우 시작
+  const handleStartGraphSync = async () => {
+    setParsingDialogOpen(false)
+    setGraphSyncDialogOpen(true)
+    setGraphSyncStep(0)
+    setIsSyncing(true)
+
+    // Step 1: 데이터 검증
+    await new Promise(resolve => setTimeout(resolve, 1200))
+    setGraphSyncStep(1)
+
+    // Step 2: 노드 생성/업데이트
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setGraphSyncStep(2)
+
+    // Step 3: 관계 설정
+    await new Promise(resolve => setTimeout(resolve, 1300))
+    setGraphSyncStep(3)
+
+    // Step 4: 속성 매핑
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setGraphSyncStep(4)
+
+    // Step 5: 완료
+    await new Promise(resolve => setTimeout(resolve, 800))
+    setGraphSyncStep(5)
+    setIsSyncing(false)
+
+    // 상태 업데이트
+    if (selectedRequest) {
+      setRequests(prev => prev.map(r =>
+        r.id === selectedRequest.id
+          ? { ...r, graphSyncStatus: "SYNCED", status: "COMPLETED" }
+          : r
+      ))
+    }
+
+    // 완료 다이얼로그로 전환
+    setTimeout(() => {
+      setGraphSyncDialogOpen(false)
+      setSyncCompleteDialogOpen(true)
+    }, 1000)
   }
 
   // 상태에 따른 배지 색상
@@ -755,7 +809,7 @@ EG자산평가 ${request.assignee} 드림`
           </ScrollArea>
 
           <div className="flex justify-between items-center pt-4 border-t border-zinc-800">
-            <Button variant="outline" className="border-zinc-700">
+            <Button variant="outline" className="border-zinc-700" onClick={handleViewOriginal}>
               <Eye className="w-4 h-4 mr-2" />
               원본 보기
             </Button>
@@ -764,11 +818,311 @@ EG자산평가 ${request.assignee} 드림`
                 <Sparkles className="w-4 h-4 mr-2" />
                 AI 재파싱
               </Button>
-              <Button className="bg-emerald-600 hover:bg-emerald-700">
+              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleStartGraphSync}>
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 확인 완료 - Graph DB 반영
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Original Document Preview Dialog */}
+      <Dialog open={originalDocDialogOpen} onOpenChange={setOriginalDocDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden bg-zinc-900 border-zinc-800">
+          <DialogHeader className="border-b border-zinc-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <FileText className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <DialogTitle>원본 약정서</DialogTitle>
+                <DialogDescription className="text-xs mt-1">
+                  {selectedRequest?.clientName} - {selectedRequest?.documentType}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <ScrollArea className="h-[60vh]">
+            <div className="p-6 bg-white text-zinc-900 rounded-lg m-4">
+              {/* Sample Document Content */}
+              <div className="text-center mb-8">
+                <h1 className="text-xl font-bold mb-2">투자 계약서</h1>
+                <p className="text-sm text-zinc-600">Investment Agreement</p>
+              </div>
+              
+              <div className="space-y-6 text-sm leading-relaxed">
+                <section>
+                  <h2 className="font-bold text-base mb-3 border-b pb-2">제1조 (목적)</h2>
+                  <p className="text-zinc-700">
+                    본 계약서는 (주)EG자산운용(이하 "운용사")이 설정하는 "EG 대체투자 1호 사모투자신탁"(이하 "본 펀드")에 대한 
+                    삼성생명보험(이하 "투자자")의 출자 및 운용에 관한 사항을 정함을 목적으로 한다.
+                  </p>
+                </section>
+
+                <section>
+                  <h2 className="font-bold text-base mb-3 border-b pb-2">제2조 (펀드 개요)</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-zinc-100 rounded">
+                      <span className="text-zinc-500 text-xs">펀드명</span>
+                      <p className="font-medium">EG 대체투자 1호</p>
+                    </div>
+                    <div className="p-3 bg-zinc-100 rounded">
+                      <span className="text-zinc-500 text-xs">펀드 규모</span>
+                      <p className="font-medium">2,000억원</p>
+                    </div>
+                    <div className="p-3 bg-zinc-100 rounded">
+                      <span className="text-zinc-500 text-xs">투자자 약정금액</span>
+                      <p className="font-medium">500억원</p>
+                    </div>
+                    <div className="p-3 bg-zinc-100 rounded">
+                      <span className="text-zinc-500 text-xs">지분율</span>
+                      <p className="font-medium">25%</p>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="font-bold text-base mb-3 border-b pb-2">제3조 (주요 투자 자산)</h2>
+                  <p className="text-zinc-700 mb-3">
+                    본 펀드는 다음의 대체투자 자산에 투자한다:
+                  </p>
+                  <div className="p-3 bg-zinc-100 rounded">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div><span className="text-zinc-500">자산명:</span> 강남 오피스 PF</div>
+                      <div><span className="text-zinc-500">자산유형:</span> 부동산 PF</div>
+                      <div><span className="text-zinc-500">현재가치:</span> 1,200억원</div>
+                      <div><span className="text-zinc-500">시공사:</span> 한양건설</div>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="font-bold text-base mb-3 border-b pb-2">제4조 (재무 약정)</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between p-2 bg-zinc-100 rounded">
+                      <span className="text-zinc-600">LTV 한도</span>
+                      <span className="font-medium">65%</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-zinc-100 rounded">
+                      <span className="text-zinc-600">DSCR 하한</span>
+                      <span className="font-medium">1.2x</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="font-bold text-base mb-3 border-b pb-2">제5조 (담보 및 보증)</h2>
+                  <p className="text-zinc-700">
+                    시공사 한양건설은 본 프로젝트에 대해 책임준공 보증을 제공하며, 
+                    투자자는 우선매수권을 보유한다.
+                  </p>
+                </section>
+
+                <div className="mt-8 pt-6 border-t">
+                  <p className="text-center text-zinc-500 text-xs">
+                    2024년 12월 15일
+                  </p>
+                  <div className="grid grid-cols-2 gap-8 mt-4">
+                    <div className="text-center">
+                      <p className="text-xs text-zinc-500">운용사</p>
+                      <p className="font-medium mt-1">(주)EG자산운용</p>
+                      <p className="text-xs text-zinc-400 mt-4">대표이사 (인)</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-zinc-500">투자자</p>
+                      <p className="font-medium mt-1">삼성생명보험</p>
+                      <p className="text-xs text-zinc-400 mt-4">투자담당임원 (인)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-zinc-800">
+            <Button variant="outline" className="border-zinc-700">
+              <Download className="w-4 h-4 mr-2" />
+              PDF 다운로드
+            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setOriginalDocDialogOpen(false)}>
+              닫기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Graph DB Sync Workflow Dialog */}
+      <Dialog open={graphSyncDialogOpen} onOpenChange={setGraphSyncDialogOpen}>
+        <DialogContent className="max-w-2xl bg-zinc-900 border-zinc-800">
+          <DialogHeader className="border-b border-zinc-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <Database className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <DialogTitle>Neo4j Graph DB 반영 중</DialogTitle>
+                <DialogDescription className="text-xs mt-1">
+                  파싱된 데이터를 그래프 데이터베이스에 동기화합니다
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="py-6 space-y-6">
+            {/* Workflow Steps */}
+            <div className="space-y-4">
+              {[
+                { step: 0, title: "데이터 검증", desc: "파싱 데이터 무결성 검증", icon: FileCheck },
+                { step: 1, title: "노드 생성/업데이트", desc: "Investor, Fund, Asset 노드 처리", icon: Database },
+                { step: 2, title: "관계 설정", desc: "INVESTS_IN, OWNS, GUARANTEES 관계 생성", icon: Link2 },
+                { step: 3, title: "속성 매핑", desc: "LTV, DSCR, 금액 등 속성 업데이트", icon: ClipboardList },
+                { step: 4, title: "완료", desc: "동기화 완료 및 검증", icon: CheckCircle2 },
+              ].map(({ step, title, desc, icon: Icon }) => {
+                const isActive = graphSyncStep === step
+                const isComplete = graphSyncStep > step
+                const isPending = graphSyncStep < step
+                
+                return (
+                  <div key={step} className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${
+                    isComplete ? "bg-emerald-500/10 border-emerald-500/30" :
+                    isActive ? "bg-blue-500/10 border-blue-500/30" :
+                    "bg-zinc-800/30 border-zinc-700"
+                  }`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isComplete ? "bg-emerald-500/20" :
+                      isActive ? "bg-blue-500/20" :
+                      "bg-zinc-700"
+                    }`}>
+                      {isComplete ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      ) : isActive ? (
+                        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                      ) : (
+                        <Icon className={`w-5 h-5 ${isPending ? "text-zinc-500" : "text-blue-400"}`} />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className={`font-medium text-sm ${isPending ? "text-zinc-500" : ""}`}>{title}</div>
+                      <div className="text-xs text-zinc-500">{desc}</div>
+                    </div>
+                    {isActive && (
+                      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse">
+                        처리 중
+                      </Badge>
+                    )}
+                    {isComplete && (
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                        완료
+                      </Badge>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Progress */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-500">진행률</span>
+                <span className="text-emerald-400">{Math.round((graphSyncStep / 5) * 100)}%</span>
+              </div>
+              <Progress value={(graphSyncStep / 5) * 100} className="h-2" />
+            </div>
+
+            {/* Cypher Query Preview */}
+            {graphSyncStep >= 2 && (
+              <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
+                  <Database className="w-3 h-3" />
+                  실행 중인 Cypher 쿼리
+                </div>
+                <pre className="text-xs text-emerald-400 font-mono overflow-x-auto">
+{`MERGE (i:Investor {name: '삼성생명보험'})
+MERGE (f:Fund {name: 'EG 대체투자 1호'})
+MERGE (a:Asset {name: '강남 오피스 PF'})
+MERGE (c:Company {name: '한양건설'})
+MERGE (i)-[:INVESTS_IN {amount: 500, pct: 25}]->(f)
+MERGE (f)-[:OWNS {pct: 60}]->(a)
+MERGE (c)-[:GUARANTEES {type: '책임준공'}]->(a)
+SET a.ltv_limit = 65, a.dscr_min = 1.2`}
+                </pre>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync Complete Dialog */}
+      <Dialog open={syncCompleteDialogOpen} onOpenChange={setSyncCompleteDialogOpen}>
+        <DialogContent className="max-w-lg bg-zinc-900 border-zinc-800">
+          <div className="py-8 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+            </div>
+            <DialogTitle className="text-xl mb-2">Graph DB 반영 완료</DialogTitle>
+            <DialogDescription className="text-sm">
+              약정서 데이터가 Neo4j에 성공적으로 반영되었습니다
+            </DialogDescription>
+          </div>
+
+          <div className="space-y-4 pb-4">
+            <Card className="p-4 bg-zinc-800/30 border-zinc-700">
+              <h4 className="font-medium text-sm mb-3">반영된 데이터 요약</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="text-zinc-400">Investor 노드:</span>
+                  <span className="font-medium">1</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-zinc-400">Fund 노드:</span>
+                  <span className="font-medium">1</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-zinc-400">Asset 노드:</span>
+                  <span className="font-medium">1</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-zinc-400">Company 노드:</span>
+                  <span className="font-medium">1</span>
+                </div>
+                <div className="flex items-center gap-2 col-span-2">
+                  <div className="w-2 h-2 rounded-full bg-purple-500" />
+                  <span className="text-zinc-400">관계 생성:</span>
+                  <span className="font-medium">3개 (INVESTS_IN, OWNS, GUARANTEES)</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-emerald-500/5 border-emerald-500/20">
+              <div className="flex items-start gap-3">
+                <Network className="w-5 h-5 text-emerald-400 mt-0.5" />
+                <div>
+                  <div className="font-medium text-sm">온톨로지 뷰에서 확인</div>
+                  <div className="text-xs text-zinc-400 mt-1">
+                    반영된 데이터는 "대체투자 온톨로지 뷰"에서 시각적으로 확인할 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-zinc-800">
+            <Button variant="outline" className="border-zinc-700" onClick={() => setSyncCompleteDialogOpen(false)}>
+              닫기
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+              setSyncCompleteDialogOpen(false)
+              toast({ title: "온톨로지 뷰로 이동", description: "사이드바에서 '대체투자 온톨로지 뷰'를 선택하세요." })
+            }}>
+              <Network className="w-4 h-4 mr-2" />
+              온톨로지 뷰에서 확인
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
