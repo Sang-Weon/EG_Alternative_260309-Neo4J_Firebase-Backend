@@ -377,10 +377,12 @@ export function OntologyGraphViewer() {
           
           <svg 
             className="w-full h-full"
+            viewBox="0 0 1200 550"
+            preserveAspectRatio="xMidYMid meet"
             style={{
-              transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
+              transform: `scale(${zoomLevel})`,
               transformOrigin: "center",
-              transition: isDragging ? "none" : "transform 0.2s ease-out"
+              transition: isDragging ? "none" : "transform 0.15s ease-out"
             }}
           >
             <defs>
@@ -409,6 +411,11 @@ export function OntologyGraphViewer() {
               </filter>
             </defs>
             
+            {/* 전체 그래프를 감싸는 그룹 - 팬 오프셋 적용 */}
+            <g 
+              transform={`translate(${panOffset.x / zoomLevel}, ${panOffset.y / zoomLevel})`}
+              style={{ transition: isDragging ? "none" : "transform 0.15s ease-out" }}
+            >
             {/* 엣지 (관계선) */}
             {edges.map((edge) => {
               const fromNode = nodes.find(n => n.id === edge.from)
@@ -475,9 +482,13 @@ export function OntologyGraphViewer() {
               return (
                 <g 
                   key={node.id} 
-                  className="cursor-pointer transition-all duration-200"
+                  className={`transition-all duration-200 ${isPanMode ? "pointer-events-none" : "cursor-pointer"}`}
                   style={{ opacity: selectedNodeId && !isConnected ? 0.3 : 1 }}
-                  onClick={() => setSelectedNodeId(isSelected ? null : node.id)}
+                  onClick={(e) => {
+                    if (isPanMode) return
+                    e.stopPropagation()
+                    setSelectedNodeId(isSelected ? null : node.id)
+                  }}
                 >
                   {/* 노드 원 */}
                   <circle
@@ -533,6 +544,7 @@ export function OntologyGraphViewer() {
                 </g>
               )
             })}
+            </g>
           </svg>
         </div>
         
