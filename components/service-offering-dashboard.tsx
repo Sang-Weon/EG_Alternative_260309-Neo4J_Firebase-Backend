@@ -17,11 +17,18 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
   FileText, TrendingUp, Calculator, CheckCircle2, 
   Loader2, Download, RefreshCw, Send, Calendar,
   Building2, Briefcase, BarChart3, PieChart, Target,
   Clock, FileBarChart, Users, Mail, Eye, Sparkles,
-  ChevronRight, AlertTriangle, Shield, Network
+  ChevronRight, AlertTriangle, Shield, Network, X
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -196,6 +203,8 @@ export function ServiceOfferingDashboard() {
     periodFrom: "",
     periodTo: ""
   })
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [previewReportType, setPreviewReportType] = useState<string | null>(null)
   const { toast } = useToast()
 
   // Sample data for charts
@@ -266,6 +275,117 @@ export function ServiceOfferingDashboard() {
   const handleSendReport = (report: ClientReport) => {
     setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "sent" as const } : r))
     toast({ title: "보고서 발송됨", description: `${report.client.name}에게 보고서가 발송되었습니다.` })
+  }
+
+  const handlePreviewReport = (templateId: string) => {
+    setPreviewReportType(templateId)
+    setPreviewDialogOpen(true)
+  }
+
+  // Generate sample report content based on type
+  const getSampleReportContent = (type: string) => {
+    const template = REPORT_TEMPLATES.find(t => t.id === type)
+    const baseData = {
+      generatedAt: new Date().toLocaleDateString("ko-KR"),
+      period: "2024년 4분기",
+      client: "샘플 고객사",
+      fund: "EG 대체투자 1호"
+    }
+
+    switch (type) {
+      case "valuation":
+        return {
+          ...baseData,
+          title: "자산운용보고서 (샘플)",
+          summary: {
+            totalAssets: 12,
+            totalValue: "8,500억원",
+            returnRate: "8.5%",
+            riskScore: 42
+          },
+          sections: [
+            { title: "요약", content: "본 보고서는 2024년 4분기 자산운용 현황을 분석한 결과입니다." },
+            { title: "자산 현황", items: ["부동산 PF: 35%", "수익형 부동산: 25%", "인프라: 20%", "항공기/선박: 12%", "신재생에너지: 8%"] },
+            { title: "가치평가 결과", items: ["평가액 증가: +320억원", "수익률: 8.5%", "벤치마크 대비: +1.5%p"] },
+            { title: "리스크 현황", items: ["평균 LTV: 62%", "평균 DSCR: 1.45x", "공실률: 5.2%"] }
+          ]
+        }
+      case "risk":
+        return {
+          ...baseData,
+          title: "리스크 분석 보고서 (샘플)",
+          summary: {
+            riskLevel: "중간",
+            watchItems: 3,
+            criticalItems: 0,
+            monitoringAssets: 8
+          },
+          sections: [
+            { title: "요약", content: "포트폴리오 전반적인 리스크 수준은 안정적으로 관리되고 있습니다." },
+            { title: "주요 리스크 지표", items: ["LTV 평균: 62% (한도: 70%)", "DSCR 평균: 1.45x (하한: 1.2x)", "ICR 평균: 2.1x (하한: 1.5x)"] },
+            { title: "시나리오 분석", items: ["금리 +1%p: 가치 -2.3%", "공실률 +5%p: 수익률 -1.2%", "부도율 +2%p: 손실 -180억원"] },
+            { title: "권고사항", items: ["A 프로젝트 LTV 모니터링 강화", "B 프로젝트 리파이낸싱 검토", "금리 헷지 비율 확대 고려"] }
+          ]
+        }
+      case "portfolio":
+        return {
+          ...baseData,
+          title: "포트폴리오 종합 보고서 (샘플)",
+          summary: {
+            totalAUM: "8,500억원",
+            yieldReturn: "8.5%",
+            sharpeRatio: 1.2,
+            diversificationScore: 78
+          },
+          sections: [
+            { title: "요약", content: "포트폴리오는 목표 수익률을 초과 달성하며 안정적으로 운용 중입니다." },
+            { title: "자산 배분", items: ["부동산: 60%", "인프라: 20%", "특수자산: 12%", "현금성: 8%"] },
+            { title: "성과 분석", items: ["절대수익률: 8.5%", "벤치마크 대비: +1.5%p", "샤프비율: 1.2"] },
+            { title: "벤치마크 비교", items: ["vs 코스피: +5.2%p", "vs 국채3년: +5.8%p", "vs 대체투자지수: +0.8%p"] }
+          ]
+        }
+      case "market":
+        return {
+          ...baseData,
+          title: "시장 인텔리전스 보고서 (샘플)",
+          summary: {
+            marketOutlook: "긍정적",
+            opportunities: 5,
+            threats: 2,
+            recommendations: 3
+          },
+          sections: [
+            { title: "요약", content: "대체투자 시장은 금리 하락 기대감으로 회복세를 보이고 있습니다." },
+            { title: "시장 동향", items: ["글로벌 대체투자 AUM: +8% YoY", "국내 부동산 거래량: 회복세", "인프라 투자 수요: 증가"] },
+            { title: "경쟁 분석", items: ["A사: 물류센터 집중 투자", "B사: 데이터센터 확대", "C사: ESG 투자 강화"] },
+            { title: "투자 기회", items: ["물류센터 개발", "친환경 에너지", "디지털 인프라"] }
+          ]
+        }
+      case "esg":
+        return {
+          ...baseData,
+          title: "ESG 통합 평가 보고서 (샘플)",
+          summary: {
+            esgScore: 72,
+            environmentScore: 68,
+            socialScore: 75,
+            governanceScore: 73
+          },
+          sections: [
+            { title: "요약", content: "ESG 통합 점수 72점으로 업계 평균 대비 우수한 수준입니다." },
+            { title: "환경(E)", items: ["탄소배출량: -12% YoY", "친환경 인증: 5건", "재생에너지 비중: 35%"] },
+            { title: "사회(S)", items: ["지역사회 기여: 우수", "안전사고: 0건", "협력사 관리: 양호"] },
+            { title: "지배구조(G)", items: ["이사회 독립성: 80%", "리스크 관리 체계: 구축 완료", "윤리경영: 준수"] }
+          ]
+        }
+      default:
+        return {
+          ...baseData,
+          title: "보고서 (샘플)",
+          summary: {},
+          sections: [{ title: "샘플 내용", content: "보고서 미리보기입니다." }]
+        }
+    }
   }
 
   return (
@@ -477,6 +597,16 @@ export function ServiceOfferingDashboard() {
                         >
                           취소
                         </Button>
+                        {newReportConfig.template && (
+                          <Button
+                            variant="outline"
+                            onClick={() => handlePreviewReport(newReportConfig.template)}
+                            className="border-zinc-700"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            샘플 미리보기
+                          </Button>
+                        )}
                         <Button
                           onClick={handleGenerateReport}
                           disabled={isGenerating}
@@ -647,7 +777,18 @@ export function ServiceOfferingDashboard() {
                         <Icon className="w-6 h-6 text-cyan-400" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-bold">{template.name}</h4>
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-bold">{template.name}</h4>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10"
+                            onClick={() => handlePreviewReport(template.id)}
+                            title="샘플 보고서 미리보기"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
                         <p className="text-xs text-zinc-400 mt-1">{template.description}</p>
                         <div className="flex flex-wrap gap-1 mt-3">
                           {template.sections.map(section => (
@@ -655,6 +796,29 @@ export function ServiceOfferingDashboard() {
                               {section}
                             </Badge>
                           ))}
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-zinc-700 text-xs"
+                            onClick={() => handlePreviewReport(template.id)}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            미리보기
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-xs"
+                            onClick={() => {
+                              setNewReportConfig(prev => ({ ...prev, template: template.id }))
+                              setShowNewReportForm(true)
+                              setActiveTab("reports")
+                            }}
+                          >
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            생성
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -756,6 +920,206 @@ export function ServiceOfferingDashboard() {
           </TabsContent>
         </Tabs>
       </Card>
+
+      {/* Sample Report Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden bg-zinc-900 border-zinc-800">
+          <DialogHeader className="border-b border-zinc-800 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {previewReportType && (() => {
+                  const template = REPORT_TEMPLATES.find(t => t.id === previewReportType)
+                  const Icon = template?.icon || FileText
+                  return (
+                    <>
+                      <div className="p-2 rounded-lg bg-cyan-500/10">
+                        <Icon className="w-5 h-5 text-cyan-400" />
+                      </div>
+                      <div>
+                        <DialogTitle className="text-lg">
+                          {getSampleReportContent(previewReportType).title}
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-zinc-500 mt-1">
+                          {template?.description}
+                        </DialogDescription>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                샘플 미리보기
+              </Badge>
+            </div>
+          </DialogHeader>
+
+          <ScrollArea className="h-[60vh] pr-4">
+            {previewReportType && (() => {
+              const content = getSampleReportContent(previewReportType)
+              return (
+                <div className="space-y-6 py-4">
+                  {/* Report Header */}
+                  <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
+                    <div className="grid grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-zinc-500">생성일</span>
+                        <p className="font-medium mt-1">{content.generatedAt}</p>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500">기간</span>
+                        <p className="font-medium mt-1">{content.period}</p>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500">고객사</span>
+                        <p className="font-medium mt-1">{content.client}</p>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500">펀드</span>
+                        <p className="font-medium mt-1">{content.fund}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Cards */}
+                  {content.summary && Object.keys(content.summary).length > 0 && (
+                    <div className="grid grid-cols-4 gap-3">
+                      {Object.entries(content.summary).map(([key, value]) => {
+                        const labels: Record<string, string> = {
+                          totalAssets: "보유 자산",
+                          totalValue: "총 평가액",
+                          returnRate: "수익률",
+                          riskScore: "리스크 점수",
+                          riskLevel: "리스크 수준",
+                          watchItems: "주의 항목",
+                          criticalItems: "위험 항목",
+                          monitoringAssets: "모니터링 자산",
+                          totalAUM: "운용자산",
+                          yieldReturn: "수익률",
+                          sharpeRatio: "샤프비율",
+                          diversificationScore: "분산점수",
+                          marketOutlook: "시장 전망",
+                          opportunities: "투자 기회",
+                          threats: "위협 요소",
+                          recommendations: "권고 사항",
+                          esgScore: "ESG 점수",
+                          environmentScore: "환경(E)",
+                          socialScore: "사회(S)",
+                          governanceScore: "지배구조(G)"
+                        }
+                        return (
+                          <div key={key} className="bg-zinc-800/30 rounded-lg p-3 border border-zinc-700/50">
+                            <div className="text-[10px] text-zinc-500 uppercase">{labels[key] || key}</div>
+                            <div className="text-xl font-bold text-cyan-400 mt-1">{String(value)}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Sections */}
+                  <div className="space-y-4">
+                    {content.sections.map((section, idx) => (
+                      <div key={idx} className="bg-zinc-800/30 rounded-lg p-4 border border-zinc-700/50">
+                        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                          <ChevronRight className="w-4 h-4 text-cyan-400" />
+                          {section.title}
+                        </h4>
+                        {section.content && (
+                          <p className="text-sm text-zinc-400 leading-relaxed">{section.content}</p>
+                        )}
+                        {section.items && (
+                          <ul className="space-y-2 mt-2">
+                            {section.items.map((item: string, i: number) => (
+                              <li key={i} className="flex items-center gap-2 text-sm text-zinc-300">
+                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sample Charts Placeholder */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-800/30 rounded-lg p-4 border border-zinc-700/50">
+                      <h4 className="font-semibold text-sm mb-3">자산 배분 현황</h4>
+                      <div className="h-[150px] flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RechartsPie>
+                            <Pie
+                              data={portfolioData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={60}
+                              dataKey="value"
+                            >
+                              {portfolioData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </RechartsPie>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    <div className="bg-zinc-800/30 rounded-lg p-4 border border-zinc-700/50">
+                      <h4 className="font-semibold text-sm mb-3">수익률 추이</h4>
+                      <div className="h-[150px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={performanceData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                            <XAxis dataKey="month" tick={{ fill: "#71717a", fontSize: 10 }} />
+                            <YAxis tick={{ fill: "#71717a", fontSize: 10 }} />
+                            <Tooltip contentStyle={{ backgroundColor: "#18181b", border: "1px solid #27272a" }} />
+                            <Line type="monotone" dataKey="return" stroke="#06b6d4" strokeWidth={2} dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Watermark */}
+                  <div className="text-center py-4 border-t border-zinc-800">
+                    <p className="text-xs text-zinc-600">
+                      이 보고서는 샘플 미리보기입니다. 실제 보고서는 실시간 데이터를 기반으로 생성됩니다.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
+          </ScrollArea>
+
+          {/* Dialog Footer */}
+          <div className="flex justify-between items-center pt-4 border-t border-zinc-800">
+            <Button variant="outline" className="border-zinc-700" onClick={() => setPreviewDialogOpen(false)}>
+              닫기
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="border-zinc-700">
+                <Download className="w-4 h-4 mr-2" />
+                PDF 다운로드
+              </Button>
+              <Button 
+                className="bg-cyan-600 hover:bg-cyan-700"
+                onClick={() => {
+                  if (previewReportType) {
+                    setNewReportConfig(prev => ({ ...prev, template: previewReportType }))
+                    setPreviewDialogOpen(false)
+                    setShowNewReportForm(true)
+                    setActiveTab("reports")
+                  }
+                }}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                이 템플릿으로 보고서 생성
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
