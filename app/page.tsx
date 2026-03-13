@@ -12,6 +12,8 @@ import { FeedbackLoopViewer } from "@/components/feedback-loop-viewer"
 import { InvestmentReportDashboard } from "@/components/investment-report-dashboard"
 import { ServiceOfferingDashboard } from "@/components/service-offering-dashboard"
 import { RegulatoryComplianceDashboard } from "@/components/regulatory-compliance-dashboard"
+import { CovenantWorkflowDashboard } from "@/components/covenant-workflow-dashboard"
+import { PortfolioImpactDashboard } from "@/components/portfolio-impact-dashboard"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -70,6 +72,10 @@ export default function Page() {
           {selectedMenu === "서비스오퍼링" && <ServiceOfferingDashboard />}
 
           {selectedMenu === "규제준수" && <RegulatoryComplianceDashboard />}
+
+          {selectedMenu === "약정서 워크플로우" && <CovenantWorkflowDashboard />}
+
+          {selectedMenu === "포트폴리오 임팩트" && <PortfolioImpactDashboard />}
         </div>
       </div>
 

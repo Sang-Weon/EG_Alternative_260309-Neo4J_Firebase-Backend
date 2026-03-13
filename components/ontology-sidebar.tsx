@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText, Briefcase, Shield } from "lucide-react"
+import { LayoutDashboard, Network, TrendingUp, AlertTriangle, Calculator, Building2, FileText, Briefcase, Shield, ClipboardList, PieChart } from "lucide-react"
 
 interface OntologySidebarProps {
   selectedMenu: string
@@ -15,6 +15,8 @@ const menuItems = [
   { id: "가치평가 시뮬레이션", icon: Calculator, label: "가치평가 시뮬레이션", group: "평가" },
   { id: "리스크/약정 모니터링", icon: AlertTriangle, label: "리스크 & 약정 모니터링", group: "평가" },
   { id: "연쇄부도 시뮬레이션", icon: TrendingUp, label: "연쇄부도 시뮬레이션", group: "평가" },
+  { id: "약정서 워크플로우", icon: ClipboardList, label: "약정서 워크플로우", group: "평가", isNew: true },
+  { id: "포트폴리오 임팩트", icon: PieChart, label: "포트폴리오 임팩트", group: "평가", isNew: true },
   { id: "투자 보고서", icon: FileText, label: "투자 분석 보고서", group: "리포트" },
   { id: "서비스오퍼링", icon: Briefcase, label: "서비스오퍼링 (대고객)", group: "리포트" },
   { id: "규제준수", icon: Shield, label: "규제준수 모니터링", group: "리포트" },
@@ -49,7 +51,10 @@ export function OntologySidebar({ selectedMenu, onMenuSelect }: OntologySidebarP
                 onClick={() => onMenuSelect(item.id)}
               >
                 <Icon className="w-4 h-4 mr-2" />
-                <span className="text-sm">{item.label}</span>
+                <span className="text-sm flex-1 text-left">{item.label}</span>
+                {"isNew" in item && item.isNew && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 ml-1">NEW</span>
+                )}
               </Button>
             )
           })}
